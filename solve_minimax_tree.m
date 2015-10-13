@@ -20,8 +20,7 @@ function [rootValue, tree] = solve_minimax_tree(tree, algorithm)
 
 
 switch algorithm
-    case 'minimax'
-        tree.initialValues = tree.values;
+    case 'minimax'        
         rootValue = minimax(tree, 1, true);
     case 'alpha_beta'
         rootValue = alpha_beta(tree, 1, -inf, inf, true);
