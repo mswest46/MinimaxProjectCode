@@ -40,7 +40,6 @@ for generation = 1:numberGeneration
     
     for j = 1:max(sample)
         parentsWithJChildren = parentIndices(sample == j);
-        disp(parentsWithJChildren);
         if ~isempty(parentsWithJChildren)
             parents = [parents repmat(parentsWithJChildren, 1, j)]; %TODO avoid changing array size
             numberKids = numberKids + length(parentsWithJChildren) * j;
@@ -66,11 +65,11 @@ tree.parents = parents;
 tree.values = values;
        
 
-if (extinct)
-    fprintf('Extinct in generation %d\n', generation);
-else
-    fprintf('Stopped in generation %d\n', numberGeneration);
-end
+% if (extinct)
+%     fprintf('Extinct in generation %d\n', generation);
+% else
+%     fprintf('Stopped in generation %d\n', numberGeneration);
+% end
 
 if plot
     close all;
