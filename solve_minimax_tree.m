@@ -60,7 +60,7 @@ value = bestValue;
        
 end
 
-function value = alpha_beta(tree, node, alpha, beta, maxPlayer);
+function value = alpha_beta(tree, node, alpha, beta, maxPlayer)
 
 if ~isnan(tree.values(node))
     value = tree.values(node);

@@ -24,7 +24,7 @@ function tree = create_tree(numberGeneration, offspringDistribution, ...
 % Based on code by: R.Gaigalas, I.Kaj
 
 parents = 0; % convention: root node has parent 0
-extinct = 0; % tree not extinct
+% extinct = 0; % tree not extinct
 numberKids = 1; % root nodes is a child
 
 
@@ -46,10 +46,10 @@ for generation = 1:numberGeneration
         end
     end
     
-    if (numberKids == 0)
-        extinct = 1;
-        break
-    end
+%     if (numberKids == 0)
+%         extinct = 1;
+%         break
+%     end
     
     if generation == numberGeneration;
         % assign values to the terminal nodes
@@ -83,6 +83,8 @@ if plot
     figure;
     trimtreeplot(tree.parents);
     text(x,y+.02,labels);
+end
+
 
 
 end
