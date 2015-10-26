@@ -38,8 +38,9 @@ if ~isnan(tree.values(node))
     return
 end
 
+children = tree.children{node};
+
 if maxPlayer
-    children = childrenOf(tree, node);
     bestValue = -inf;
     for i = 1:length(children)
         child = children(i);
@@ -48,7 +49,6 @@ if maxPlayer
     end
 else
     bestValue = inf;
-    children = childrenOf(tree, node);
     for i = 1:length(children)
         child = children(i);
         val = minimax(tree, child, true);
@@ -67,8 +67,9 @@ if ~isnan(tree.values(node))
     return
 end
 
+children = tree.children{node};
+
 if maxPlayer
-    children = childrenOf(tree, node);
     bestValue = -inf;
     for i = 1:length(children)
         child = children(i);
@@ -80,7 +81,6 @@ if maxPlayer
         end
     end
 else
-    children = childrenOf(tree, node);
     bestValue = inf;
     for i = 1:length(children)
         child = children(i);
@@ -95,11 +95,6 @@ end
 
 value = bestValue;
 
-end
-
-
-function children = childrenOf(tree, node)
-children = find(tree.parents==node);
 end
 
 

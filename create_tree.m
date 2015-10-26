@@ -51,18 +51,16 @@ for generation = 1:numberGeneration
 %         break
 %     end
     
-    if generation == numberGeneration;
-        % assign values to the terminal nodes
-        values = NaN(1, length(parents));
-        value_sample = random_sample(terminalNodeDistribution, numberKids);
-        values(length(parents) - numberKids + 1: length(parents))=value_sample;
-        
-    end
     
 end
 
+values = NaN(1, length(parents));
+value_sample = random_sample(terminalNodeDistribution, numberKids);
+values(length(parents) - numberKids + 1: length(parents))=value_sample;     
+
 tree.parents = parents;
 tree.values = values;
+tree = find_children(tree);
        
 
 % if (extinct)
@@ -88,3 +86,18 @@ end
 
 
 end
+
+
+function treeWithChildren = find_children(tree)
+
+nNodes = length(tree.parents);
+children = cell(1,nNodes);
+
+for i = 2: nNodes
+    children{tree.parents(i)} = [children{tree.parents(i)}, i];
+end
+
+tree.children = children;
+treeWithChildren = tree;
+end
+
