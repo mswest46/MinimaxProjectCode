@@ -1,74 +1,108 @@
 
-function bottleneck_node = DDFS(adjacency_matrix, height, r, g, xy)
+function [bottleneck_node, ownership] = DDFS(adjacency_matrix, height, r, g, xy)
+
+% DDFS - Performs Double Depth First Search on a layered graph.
+% Given the two starting nodes, we are interested in the highest botteneck.
+% i.e. the highest node for which all paths from both the starting node to
+% layer 0 vxs must pass through.
+%
+% Syntax:
+% bottleneck_node =
+% DDFS(adjacency_matrix, height, red_vx, green_vx, (optional) plot_points)
+%
+% Inputs:
+% adjacency_matrix = the adjacency matrix of the graph
+% height = layers of the graph
+% r = starting red vertex
+% g = starting green vertex
+% xy = optional plotting layout for the points.
+
+% Outputs: (WILL ADAPT DEPENDING ON REST OF MV)
+% bottleneck_node = the highest bottleneck
+% ownership = an array which indicates the color of the vxs. in the graph
+% after completion.
+
 close all
-gplot(adjacency_matrix,xy,'-*')
-axis([0,7,-1,8]);
-hold on;
+
+switch nargin
+    case 4
+        plot_switch = 0;
+    case 5 
+        plot_switch = 1;
+    otherwise 
+        error('not enough input arguments')
+end
+
+if plot_switch
+    gplot(adjacency_matrix,xy,'-*')
+    axis([min(xy(:,1))-1,max(xy(:,1))+1,min(xy(:,2))-1,max(xy(:,2))+1]);
+    hold on;
+end
 
 num_nodes = size(adjacency_matrix,1);
 level = @(node_index) height(node_index);
+
 green_parent = zeros(1,num_nodes);
 red_parent = zeros(1,num_nodes);
 node_visited = zeros(1, num_nodes);
-edge_used = zeros(num_nodes);
 ownership = zeros(1,num_nodes); % 1 = red, 2 = green
 green_position = g;
 red_position = r;
 barrier = g;
 bottleneck_found = 0;
 
-k = 0;
+if plot_switch 
+    first_run = 1;
+end
+
 while ~(level(red_position) == 0 && level(green_position) == 0)
-    1;
     
     while level(red_position)>=level(green_position)
         
-        % plot graph
-        
-        if k
-            delete(h1);
-            delete(h2);
-            delete(h3);
-         
+        if plot_switch
+            % plot graph
+            
+            if ~first_run
+                delete(h1);
+                delete(h2);
+                delete(h3);
+            end
+            first_run = 0;
+            h1 = viscircles(xy(red_position,:),.25,'Color','red');
+            h2 = viscircles(xy(green_position,:),.2,'Color','green');
+            h3 = viscircles(xy(barrier,:),.3,'Color','black');
+            red_xy = xy(ownership == 1,:);
+            if ~isempty(red_xy)
+                x = red_xy(:,1);
+                y = red_xy(:,2);
+                plot(x,y,'r*');
+            end
+            green_xy = xy(ownership == 2,:);
+            if ~isempty(green_xy)
+                x = green_xy(:,1);
+                y = green_xy(:,2);
+                plot(x,y,'g*');
+            end
+            1;
+            pause(.3);
         end
-        k=1;
-        h1 = viscircles(xy(red_position,:),.25,'Color','red');
-        h2 = viscircles(xy(green_position,:),.2,'Color','green');
-        h3 = viscircles(xy(barrier,:),.3,'Color','black');
-        red_xy = xy(ownership == 1,:);
-        if ~isempty(red_xy)
-            x = red_xy(:,1);
-            y = red_xy(:,2);
-            plot(x,y,'r*');
-        end
-        green_xy = xy(ownership == 2,:);
-        if ~isempty(green_xy)
-            x = green_xy(:,1);
-            y = green_xy(:,2);
-            plot(x,y,'g*');
-        end
-        1;
-        pause;
         
         
         if red_position == green_position
             green_position = green_parent(green_position);
+            node_visited(red_position) = 1;
             break
         end
         
         
         ownership(red_position) = 1;
         node_visited(red_position) = 1;
-        unused_edges = (adjacency_matrix & ~edge_used);
-        unused_neighbors = find(unused_edges(red_position,:));
+        unused_neighbors = find(adjacency_matrix(red_position,:)& ~node_visited);
         unused_children = unused_neighbors(...
             height(unused_neighbors) < height(red_position));
         flag = 0;
         for u = unused_children
-            edge_used(red_position, u) = 1;
-            edge_used(u, red_position) = 1;
             if u == green_position
-                1;
                 %we've met green, back green up 1.
                 green_position = green_parent(green_position);
                 red_parent(u) = red_position;
@@ -106,43 +140,44 @@ while ~(level(red_position) == 0 && level(green_position) == 0)
     
     while(level(red_position)<level(green_position))
         
-        % plot graph
-        if k
-            delete(h1);
-            delete(h2);
-            delete(h3);
-         
+        if plot_switch
+            
+            % plot graph
+            if ~first_run
+                delete(h1);
+                delete(h2);
+                delete(h3);
+                
+            end
+            first_run = 0;
+            h1 = viscircles(xy(red_position,:),.25,'Color','red');
+            h2 = viscircles(xy(green_position,:),.2,'Color','green');
+            h3 = viscircles(xy(barrier,:),.3,'Color','black');
+            red_xy = xy(ownership == 1,:);
+            if ~isempty(red_xy)
+                x = red_xy(:,1);
+                y = red_xy(:,2);
+                plot(x,y,'r*');
+            end
+            green_xy = xy(ownership == 2,:);
+            if ~isempty(green_xy)
+                x = green_xy(:,1);
+                y = green_xy(:,2);
+                plot(x,y,'g*');
+            end
+            1;
+            pause(.3);
         end
-        k=1;
-        h1 = viscircles(xy(red_position,:),.25,'Color','red');
-        h2 = viscircles(xy(green_position,:),.2,'Color','green');
-        h3 = viscircles(xy(barrier,:),.3,'Color','black');
-        red_xy = xy(ownership == 1,:);
-        if ~isempty(red_xy)
-            x = red_xy(:,1);
-            y = red_xy(:,2);
-            plot(x,y,'r*');
-        end
-        green_xy = xy(ownership == 2,:);
-        if ~isempty(green_xy)
-            x = green_xy(:,1);
-            y = green_xy(:,2);
-            plot(x,y,'g*');
-        end
-        1;
-        pause;
-        
+               
         
         ownership(green_position) = 2;
-        unused_edges = (adjacency_matrix & ~edge_used);
-        unused_neighbors = find(unused_edges(green_position,:));
+        node_visited(green_position) = 1;
+        
+        unused_neighbors = find(adjacency_matrix(green_position,:)& ~node_visited);
         unused_children = unused_neighbors(...
             height(unused_neighbors) < height(green_position));
-        1;
         flag = 0;
         for u = unused_children
-            edge_used(green_position, u) = 1;
-            edge_used(u, green_position) = 1;
             
             if ~node_visited(u)
                 green_parent(u) = green_position;
@@ -155,8 +190,7 @@ while ~(level(red_position) == 0 && level(green_position) == 0)
         if flag == 1
             break
         end
-        
-         1;
+      
         if ~(green_position==barrier)
             green_position = green_parent(green_position);
         else
@@ -167,7 +201,10 @@ while ~(level(red_position) == 0 && level(green_position) == 0)
     end
 end
 
-
+if ~bottleneck_found
+    bottleneck_node = [];
+    disp('no bottleneck')
+end
 
 
 
