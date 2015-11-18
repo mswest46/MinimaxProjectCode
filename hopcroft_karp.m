@@ -1,10 +1,25 @@
-function [matching_size, matching_matrix] = hopcroft_karp(adjacency_matrix)
+function [matching_size, matching_matrix] = hopcroft_karp(adjacency_matrix, xy)
+
 
 graph.adjacency_matrix = adjacency_matrix;
 
 if ~(isfield(graph, 'part1') && isfield(graph, 'part2'))
     [graph.part1, graph.part2] = bipartition(adjacency_matrix);
 end
+
+if nargin == 2
+    graph_bool = 1;
+else 
+    graph_bool = 0;
+end
+
+if graph_bool
+    hold on;
+    gplot(adjacency_matrix,xy);
+    axis([-.25,1.25,-.25,1.25]);
+    pause;
+end
+
 graph.nNodes = length(graph.adjacency_matrix(:,1));
 
 % an extra vx which will attach to end of minimal augmenting paths
@@ -36,6 +51,11 @@ matching = [1:graph.nNodes; matching];
 matching = matching(:,(matching(2,:)<graph.dummy));
 matching_matrix = sparse(matching(1,:),matching(2,:),1,graph.nNodes,graph.nNodes);
 matching_size = length(matching(1,:));
+
+if graph_bool
+    gplot(matching_matrix,xy,'-.y')
+end
+
 % matching_matrix = zeros(graph.nNodes);
 %
 % mat
