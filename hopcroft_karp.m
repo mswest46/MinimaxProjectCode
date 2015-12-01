@@ -1,208 +1,120 @@
-function [matching_size, matching_matrix] = hopcroft_karp(adjacency_matrix, xy)
+function pair = hopcroft_karp(adjacency_matrix)
 
-
-graph.adjacency_matrix = adjacency_matrix;
-
-
-if ~(isfield(graph, 'part1') && isfield(graph, 'part2'))
-    [graph.part1, graph.part2] = bipartition(adjacency_matrix);
-end
-
-if nargin == 2
-    graph_bool = 1;
-else
-    graph_bool = 0;
-end
-
-graph.graph_bool = graph_bool;
-
-if graph_bool
-    graph.xy = xy;
-    hold on;
-    gplot(adjacency_matrix,xy);
-    axis([-.25,1.25,-.25,1.25]);
-    pause;
-end
-
-graph.nNodes = length(graph.adjacency_matrix(:,1));
-
-% an extra vx which will attach to end of minimal augmenting paths
-graph.dummy = graph.nNodes + 1;
-
-graph.pair = graph.dummy*ones(1,graph.nNodes); %everything starts paired with dummy
-count = 0;
+[part1, ~] = bipartition(adjacency_matrix);
+num_nodes = length(adjacency_matrix(:,1));
+dummy = num_nodes+1;
+pair = dummy*ones(1,num_nodes);
+% pair is an array which contains the matching information. everything
+% initially is free, so we say it is paired with dummy.
+matching_size = 0; %mantained only for display purposes.
+dispstat('','init');
 
 while true
-    [graph.layer, bool] = BFS(graph);
-    1;
-    if ~bool % no aug paths left
+    [layer, done] = BFS(adjacency_matrix, part1, num_nodes, dummy, pair);
+    % BFS performs a breadth first search on our graph, and assigns layers
+    % to the vertices corresponding to distances from free vertices. It
+    % returns done==true if we don't have any augmenting paths
+    if done
+        disp(['number of vertices in the matching: ',...
+            num2str(sum(pair<dummy))]);
         break
     end
-    for u = graph.part1
-        1;
-        if (graph.pair(u)==graph.dummy)
-            [bool,pair,layer] = DFS(graph,u);
-            if bool % i.e. if u in aug path
-                count = count+1;
-                graph.pair = pair; % change the matching
-                graph.layer = layer; % update the layers
+    for i = 1: length(part1);
+        u = part1(i);
+        if pair(u) == dummy
+            % u is free
+            [bool, inner_pair, inner_layer] = DFS(...
+                adjacency_matrix, pair, layer, dummy, u);
+            if bool
+                % u is in an augmenting path. increment the matching size
+                % by one for display purposes.
+                matching_size = matching_size + 2;
+                
+                dispstat([num2str(100*matching_size/num_nodes),...
+                    '% of nodes matched']);
+                
+                pair = inner_pair;
+                layer = inner_layer;
             end
         end
     end
+end
+end
+
+
+function [layer,done] = BFS(adjacency_matrix, part1,num_nodes,dummy,pair)
+
+% this queue system involves resizing the array all the time. that's silly.
+
+queue = zeros(1,num_nodes);
+q_location = 0; % the last nonempty element.
+layer = nan(1,num_nodes+1);
+for i = 1: length(part1)
+    % determine which vertices are free and which are not in the current
+    % matching
+    u = part1(i);
+    if pair(u) == dummy
+        layer(u) = 0;
+        q_location = q_location+1;
+        queue(q_location) = u;
+    else
+        layer(u) = inf;
+    end
+    layer(dummy) = inf;
 end
 1;
-matching = graph.pair;
-matching = [1:graph.nNodes; matching];
-
-matching = matching(:,(matching(2,:)<graph.dummy));
-matching_matrix = sparse(matching(1,:),matching(2,:),1,graph.nNodes,graph.nNodes);
-if any(sum(matching_matrix,1)>1)
-    error('this aint a matching');
-end
-
-matching_size = length(matching(1,:));
-
-if graph_bool
-    gplot(matching_matrix,xy,'-.y')
-end
-
-disp('count is')
-disp(count)
-
-% matching_matrix = zeros(graph.nNodes);
-%
-% mat
-%
-% for i = 1:graph.nNodes
-%     if matching(i)<graph.dummy
-%         matching_matrix(i,matching(i)) = 1;
-%         matching_matrix(matching(i),i) = 1;
-%     end
-% end
-% matching_size = sum(matching<graph.dummy)/2;
-
-
-end
-
-
-function [layer, bool] = BFS(graph)
-dummy = graph.dummy;
-% queue = zeros(1,graph.nNodes);
-queue = [];
-qSpot = 0;
-layer = nan(1,graph.nNodes);
-count = 1;
-for u = graph.part1
-    count = count+1;
-    if graph.pair(u)==dummy
-%         qSpot = qSpot+1;
-        layer(u) = 0;
-%         queue(qSpot) = u;
-        queue = [queue,u];
-        % put the free vxs of part1 in queue and give layer 0
-    else layer(u) = inf;
-        % otherwise not in layer
-    end
-    
-    if graph.graph_bool
-        str = num2str(layer(u));
-        h(count) = text(graph.xy(u,1)+.1,graph.xy(u,2),str);
-        pause(.3);
-    end
-    
-end
-
-delete(h);
-
-layer(dummy) = inf;
-
-% while qSpot>0
-while ~isempty(queue)
-    %     u = queue(qSpot);
-    %     qSpot = qSpot - 1;
-    u = queue(end); % pop u
-    queue = queue(1:end-1);
-    if layer(u) < layer(dummy) % if we haven't hit dummy yet. if we've hit dummy we've found minimal aug paths already
-        neighbors = find(graph.adjacency_matrix(:,u));
-        for i = 1:length(neighbors);
+while q_location>0
+    u = queue(q_location);
+    q_location = q_location-1;
+    if layer(u) < layer(dummy)
+        % because dummy starts at inf, once dummy has changed to something
+        % less than inf we know we've found some minimal augmenting paths
+        neighbors = find(adjacency_matrix(:,u));
+        for i = 1: length(neighbors)
             v = neighbors(i);
-            if layer(graph.pair(v)) == inf % v's pair not hit yet
-                layer(graph.pair(v)) = layer(u) + 1;
-                %                 n = length(graph.pair(v));
-                %                 queue(qSpot+1: qSpot+n) = graph.pair(v);
-                %                 qSpot = qSpot + n;
-                queue = [queue, graph.pair(v)];
-                % eventually we will have v's pair be dummy, in wich
-                % case we have an aug path from a free vx in u to a
-                % free vx in v with length 2*layer(dummy) - 1.
+            if layer(pair(v)) == inf
+                % otherwise, we've already labelled this bad boy.
+                layer(pair(v)) = layer(u) + 1;
+                q_location = q_location + 1;
+                queue(q_location) = pair(v);
             end
         end
     end
+    
 end
-bool = ~(layer(dummy)==inf); % if layer(dummy)=inf then every neighbor of every u in our queue is in the matching.
+done = layer(dummy)==inf;
+% if layer(dummy)=inf then every neighbor of every u in our queue is in the
+% matching.
 end
 
+function [bool,pair,layer] = DFS(adjacency_matrix,pair,layer,dummy,u)
 
-function [bool,pair,layer] = DFS(graph,u)% answers the question, is this in a an aug path and if yes
-
-pair = graph.pair;
-layer = graph.layer;
-if ~(u == graph.dummy)
-    u_neighbors = find(graph.adjacency_matrix(:,u));
-    for i = 1:length(u_neighbors);
-        v = u_neighbors(i);
-        if (layer(pair(v)) == layer(u)+1)
-            [inner_bool, pair, layer] = DFS(graph,pair(v));
-            if  inner_bool; % make sure we're on the right layer, because we switch pairs every so often
+if ~(u == dummy)
+    % otherwise we have reached a free vx and so we've completing an
+    % augmenting path.
+    neighbors = find(adjacency_matrix(:,u));
+    for i = 1:length(neighbors)
+        v = neighbors(i);
+        if layer(pair(v)) == layer(u) + 1
+            [bool, pair, layer] = DFS(...
+                adjacency_matrix,pair,layer,dummy,pair(v));
+            if bool
                 pair(v) = u;
                 pair(u) = v;
-                bool = true;
                 return
-            end
+                % returns to parent function
+            end%
         end
     end
-    layer(u) = inf; % remove this from the set of vxs for other paths
-    bool = false; % if no neighbor of u completes the aug path.
+    % we only get here when there are no aug paths from u to free vx.
+    layer(u) = inf; % we do this so we don't check it again for other u
+    bool = false;
     return
+    % returns to parent function.
 else
-    bool = true; % we're at the dummy vx
+    % we are at dummy vertex.
+    bool = true;
 end
 
 end
-
-function  [part1,part2] = bipartition(adjacency_matrix)
-nNodes = length(adjacency_matrix);
-partsArray = -1*ones(1,nNodes);
-partsArray(1) = 0;
-queue = 1;
-count = 1;
-while ~isempty(queue) || (count<nNodes)
-    if isempty(queue)
-        u = find(partsArray==-1,1);
-        queue = u;
-        partsArray(u) = 0;
-        count = count + 1;
-    end
-    u = queue(end);
-    queue = queue(1:end-1);
-    neighbors = find(adjacency_matrix(:,u));
-    for i = 1:length(neighbors);
-        v = neighbors(i);
-        if partsArray(v) < 0
-            partsArray(v) = 1 - partsArray(u);
-            count = count+1;
-            queue = [queue, v];
-        elseif partsArray(v) == partsArray(u)
-            error('this graph is not bipartite');
-        end
-    end
-end
-
-1;
-
-part1=find(partsArray==0);
-part2=find(partsArray==1);
-end
-
-
 
