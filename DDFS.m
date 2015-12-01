@@ -1,6 +1,6 @@
 
 function [free_red, free_green, bottleneck_node, ownership] = DDFS(...
-    adjacency_matrix, height, r, g, xy)
+    adjacency_matrix, level, r, g, xy)
 
 % DDFS - Performs Double Depth First Search on a layered graph.
 % Given the two starting nodes, we are interested in the highest botteneck.
@@ -9,11 +9,11 @@ function [free_red, free_green, bottleneck_node, ownership] = DDFS(...
 %
 % Syntax:
 % bottleneck_node =
-% DDFS(adjacency_matrix, height, red_vx, green_vx, (optional) plot_points)
+% DDFS(adjacency_matrix, level, red_vx, green_vx, (optional) plot_points)
 %
 % Inputs:
 % adjacency_matrix = the adjacency matrix of the graph
-% height = layers of the graph
+% level = layers of the graph
 % r = starting red vertex
 % g = starting green vertex
 % xy = optional plotting layout for the points.
@@ -41,7 +41,6 @@ if plot_switch
 end
 
 num_nodes = size(adjacency_matrix,1);
-level = @(node_index) height(node_index);
 
 green_parent = zeros(1,num_nodes);
 red_parent = zeros(1,num_nodes);
@@ -96,12 +95,10 @@ while ~(level(red_position) == 0 && level(green_position) == 0)
         
         ownership(red_position) = 1;
         node_visited(red_position) = 1;
-        unused_neighbors = find(adjacency_matrix(red_position,:)& ~node_visited);
-        unused_children = unused_neighbors(...
-            height(unused_neighbors) < height(red_position));
+        unused_predecessors = find(adjacency_matrix(:,red_position)& ~node_visited);
         flag = 0;
         
-        for u = unused_children
+        for u = unused_predecessors
             if u == green_position
                 %we've met green, back green up 1.
                 green_position = green_parent(green_position);
@@ -176,11 +173,10 @@ while ~(level(red_position) == 0 && level(green_position) == 0)
         ownership(green_position) = 2;
         node_visited(green_position) = 1;
         
-        unused_neighbors = find(adjacency_matrix(green_position,:)& ~node_visited);
-        unused_children = unused_neighbors(...
-            height(unused_neighbors) < height(green_position));
+        unused_predecessors = find(adjacency_matrix(:,green_position)& ~node_visited);
+
         flag = 0;
-        for u = unused_children
+        for u = unused_predecessors
             
             if ~node_visited(u)
                 green_parent(u) = green_position;
