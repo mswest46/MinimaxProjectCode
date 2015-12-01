@@ -1,5 +1,6 @@
 
-function [bottleneck_node, ownership] = DDFS(adjacency_matrix, height, r, g, xy)
+function [free_red, free_green, bottleneck_node, ownership] = DDFS(...
+    adjacency_matrix, height, r, g, xy)
 
 % DDFS - Performs Double Depth First Search on a layered graph.
 % Given the two starting nodes, we are interested in the highest botteneck.
@@ -27,9 +28,9 @@ close all
 switch nargin
     case 4
         plot_switch = 0;
-    case 5 
+    case 5
         plot_switch = 1;
-    otherwise 
+    otherwise
         error('not enough input arguments')
 end
 
@@ -51,7 +52,7 @@ red_position = r;
 barrier = g;
 bottleneck_found = 0;
 
-if plot_switch 
+if plot_switch
     first_run = 1;
 end
 
@@ -87,13 +88,11 @@ while ~(level(red_position) == 0 && level(green_position) == 0)
             pause(.3);
         end
         
-        
         if red_position == green_position
             green_position = green_parent(green_position);
             node_visited(red_position) = 1;
             break
         end
-        
         
         ownership(red_position) = 1;
         node_visited(red_position) = 1;
@@ -101,6 +100,7 @@ while ~(level(red_position) == 0 && level(green_position) == 0)
         unused_children = unused_neighbors(...
             height(unused_neighbors) < height(red_position));
         flag = 0;
+        
         for u = unused_children
             if u == green_position
                 %we've met green, back green up 1.
@@ -128,13 +128,16 @@ while ~(level(red_position) == 0 && level(green_position) == 0)
         else
             red_position = red_parent(red_position);
             break
-            
         end
         
     end
     
     if bottleneck_found
+        
+        disp('bottleneck found');
         bottleneck_node = green_position;
+        free_red = [];
+        free_green = [];
         break
     end
     
@@ -168,7 +171,7 @@ while ~(level(red_position) == 0 && level(green_position) == 0)
             1;
             pause(.3);
         end
-               
+        
         
         ownership(green_position) = 2;
         node_visited(green_position) = 1;
@@ -190,7 +193,7 @@ while ~(level(red_position) == 0 && level(green_position) == 0)
         if flag == 1
             break
         end
-      
+        
         if ~(green_position==barrier)
             green_position = green_parent(green_position);
         else
@@ -202,8 +205,10 @@ while ~(level(red_position) == 0 && level(green_position) == 0)
 end
 
 if ~bottleneck_found
+    disp('augmenting path exists');
+    free_red = red_position;
+    free_green = green_position;
     bottleneck_node = [];
-    disp('no bottleneck')
 end
 
 
