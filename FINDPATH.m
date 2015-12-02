@@ -1,34 +1,24 @@
 function path = FINDPATH(...
-    adjacency_matrix, high_vx, low_vx, ownership, height)
+    parent, high_vx, low_vx)
 
-num_nodes = length(adjacency_matrix(:,1));
-node_visited = zeros(1,num_nodes);
-color = ownership(high_vx);
-parent = zeros(1,num_nodes);
+% For now, assuming no blossoms, we can take red_parent and green_parent
+% from DDFS. We'll have to do more work later. 
 
-queue = high_vx;
+path = zeros(1,100);
+path_position = 0;
 
-while ~isempty(queue)
-    v = queue(end);
-    queue = queue(1:end-1);
-    if v == low_vx
-        1;
+v = low_vx;
+
+while true
+    path_position = path_position + 1;
+    if path_position > 100
+        path = [path, zeros(1,1000)];
+    end
+    path(path_position) = v;
+    if v == high_vx
         break
     end
-    unused_neighbors = find(adjacency_matrix(v,:) & ~node_visited);
-    same_color_children = unused_neighbors(...
-        height(unused_neighbors) < height(v) & ...
-        ownership(unused_neighbors) == color &...
-        height(unused_neighbors) >= height(low_vx));
-    parent(same_color_children) = v;
-    queue = [queue, same_color_children];
-end
-
-path = [];
-v = low_vx;
-while v ~= high_vx
-    path = [path, parent(v)];
     v = parent(v);
 end
 
-end
+path(path == 0 ) = [];
