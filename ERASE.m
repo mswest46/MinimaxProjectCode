@@ -20,7 +20,7 @@ while ~isempty(queue)
     for i = 1:length(v_is_predecessor_of)
         u = v_is_predecessor_of(i);
         predecessors_count(u) = predecessors_count(u) - 1;
-        if predecessors_count(u) == 0 && ~erased(u)
+        if predecessors_count(u) == 0 && ~erased(u) && ~any(ismember(queue,u)) % don't want to 'double erase' u
             queue = [queue,u];
         end
         if predecessors_count(u) < 0
