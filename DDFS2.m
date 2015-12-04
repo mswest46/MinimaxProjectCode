@@ -1,17 +1,19 @@
 function [free_red, free_green, parent, bottleneck_node, ownership] = ...
-    DDFS2(available_edges, level, red_initial, green_initial, pair, xy)
+    DDFS2(adjacency_matrix, level, red_initial, green_initial, xy)
+
+% conducts a double depth first search on the given graph, from the initial
+% nodes. 
 
 switch nargin
-    case 5
+    case 4
         plot_switch = 0;
-    case 6
+    case 5
         plot_switch = 1;
     otherwise
         error('not enough input arguments')
 end
 
 if plot_switch
-    adjacency_matrix = available_edges;
     gplot(adjacency_matrix,xy,'-*')
     axis([min(xy(:,1))-1,max(xy(:,1))+1,min(xy(:,2))-1,max(xy(:,2))+1]);
     hold on;
@@ -20,7 +22,7 @@ end
 
 
 
-num_nodes = length(available_edges(:,1));
+num_nodes = length(adjacency_matrix(:,1));
 ownership = zeros(1, num_nodes); % 1 for red, 2 for green
 ownership(red_initial) = 1;
 ownership(green_initial) =2;
@@ -73,7 +75,7 @@ while ~(level(red_position) == 0 && level(green_position) == 0)
         end
         
         % RED_DFS
-        u = find(available_edges(:,red_position),1);
+        u = find(adjacency_matrix(:,red_position),1);
         if isempty(u)
             if red_position == red_initial
                 % we have backtracked all the way and a bottleneck
@@ -95,11 +97,11 @@ while ~(level(red_position) == 0 && level(green_position) == 0)
                 green_position = parent(green_position);
                 DCV = red_position;
             elseif ownership(u) % u is previously visited via a different edge by one of the DFSs
-                available_edges(u,red_position) = 0; % mark edge as used.
+                adjacency_matrix(u,red_position) = 0; % mark edge as used.
                 % don't change red_position
             else % we are in an unexamined edge to an unexamined vertex
                 parent(u) = red_position;
-                available_edges(u,red_position) = 0;
+                adjacency_matrix(u,red_position) = 0;
                 ownership(u) = 1;
                 red_position = u;
             end
@@ -142,7 +144,7 @@ while ~(level(red_position) == 0 && level(green_position) == 0)
         end
         
         % GREEN_DFS
-        u = find(available_edges(:,green_position),1);
+        u = find(adjacency_matrix(:,green_position),1);
         if isempty(u)
             if green_position == barrier
                 % green returns to DCV and takes ownership, red does its
@@ -160,11 +162,11 @@ while ~(level(red_position) == 0 && level(green_position) == 0)
                 green_position = parent(green_position); % set green backtracking
                 DCV = red_position;
             elseif ownership(u)
-                available_edges(u,green_position) = 0;
+                adjacency_matrix(u,green_position) = 0;
                 % do nothing else
             else
                 parent(u) = green_position;
-                available_edges(u,green_position) = 0;
+                adjacency_matrix(u,green_position) = 0;
                 ownership(u) = 2;
                 green_position = u;
             end

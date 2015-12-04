@@ -21,7 +21,8 @@ predecessors = zeros(num_nodes);
 % NB that this is not going to be a symmetric matrix! Let's say that the jth column
 % contains the predecessors of vx j. so we access j's predecessors with
 % predecessors(:,j), and set i to be predecessor of j with
-% predecessors(i,j) = 1.
+% predecessors(i,j) = 1. Might be more memory efficient to have
+% predecessors in an array with preallocated size. TODO
 
 
 search_level = -1;
@@ -56,10 +57,11 @@ while ~bridge_found
                     odd_level(v) = search_level+1;
                     predecessors(u,v) = 1;
                     if even_level(v) < inf
-                        
                         bridge_found = 1;
                         bridges_position = bridges_position + 1;
                         bridges(:,bridges_position) = [u;v];
+                        
+                        
                     end
                 end
             end
@@ -75,8 +77,8 @@ while ~bridge_found
             if v ~= dummy % i.e. v is not free
                 even_level(v) = search_level + 1;
                 predecessors(u,v) = 1;
+                
                 if odd_level(v) < inf
-                    
                     bridge_found = 1;
                     bridges_position = bridges_position + 1;
                     bridges(:,bridges_position) = [u;v];
