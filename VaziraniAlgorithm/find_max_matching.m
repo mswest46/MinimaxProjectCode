@@ -8,7 +8,7 @@ function pair = find_max_matching(adjacency_matrix, pair)
 % all information about the underlying graph will be placed in the struct
 % graph, which will not be modified.
 
-
+phase_no = 0;
 graph = create_graph_struct_from_adjacency_matrix(adjacency_matrix);
 dummy = graph.dummy;
 num_nodes = graph.num_nodes;
@@ -41,7 +41,6 @@ while true
     search_mods.candidates = cell(1,num_nodes);
     search_mods.initial_flag = true;
     search_mods.max_matching_found = false;
-    search_mods.index_fun = @ (search_level) search_level + 1; % because matlab indexing starts with 1.
     
     
     % anything modifid by CREATE_BLOOM is stuck into struct
@@ -61,12 +60,15 @@ while true
         
         search_struct = v2struct(graph,pair,search_mods,bloom, erased);
         search_mods = SEARCH(search_struct);
+        search_no = search_no + 1;
+        
         if search_mods.max_matching_found
             return
         end
         level = min(search_mods.even_level, search_mods.odd_level);
         
-        for bridge = search_mods.bridges{search_mods.index_fun(search_mods.search_level)}
+        for bridge_no = 1: length(search_mods.bridges{index(search_mods.search_level)})
+            bridge = search_mods.bridges{search_mods.index(search_mods.search_level)}(bridge_no);
             if bridge == 891
                 1;
             end

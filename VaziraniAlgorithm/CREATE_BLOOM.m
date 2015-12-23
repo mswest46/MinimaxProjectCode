@@ -25,14 +25,17 @@ level = min(even_level,odd_level);
 bloom_number = bloom_number + 1; % add new bloom.
 bloom_vertices = find(ownership); % all things in trees are bloom.
 
+%check for double registry
+if ~isempty(find(base==bottleneck,1))
+    error('double registry')
+end
 
+    
 
 base(bloom_number) = bottleneck;
 left_peak(bloom_number) = init_left;
 right_peak(bloom_number) = init_right;
 
-index = @ (search_level) search_level+1;
-1;
 for y = bloom_vertices % assign other levels and find extra bridges
     bloom(y) = bloom_number;
     bloom_ownership(y) = ownership(y);
