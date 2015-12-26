@@ -9,6 +9,9 @@ function pair = find_max_matching(adjacency_matrix, pair)
 % graph, which will not be modified.
 
 phase_no = 0;
+matching_size = 0;
+dispstat('','init');
+
 graph = create_graph_struct_from_adjacency_matrix(adjacency_matrix);
 dummy = graph.dummy;
 num_nodes = graph.num_nodes;
@@ -53,25 +56,30 @@ while true
     base = []; % the base of the various blooms
     left_peak = [];
     right_peak = [];
-    
+    ownership = zeros(1,num_nodes);
+    phase_no = phase_no + 1;
     
     while ~augmentation_occurred
         
         
         search_struct = v2struct(graph,pair,search_mods,bloom, erased);
         search_mods = SEARCH(search_struct);
-        search_no = search_no + 1;
+        
         
         if search_mods.max_matching_found
+            disp('max matching found');
             return
         end
         level = min(search_mods.even_level, search_mods.odd_level);
-        
-        for bridge_no = 1: length(search_mods.bridges{index(search_mods.search_level)})
-            bridge = search_mods.bridges{search_mods.index(search_mods.search_level)}(bridge_no);
-            if bridge == 891
+        bridges = search_mods.bridges{index(search_mods.search_level)};
+        for bridge_no = 1: length(bridges)
+            
+            bridge = bridges (bridge_no);
+            
+            if bridge == 6
                 1;
             end
+            
             if isempty(bridge)
                 error('no bridge')
             end
@@ -110,8 +118,14 @@ while true
             classify_struct.erased = erased;
             classify_struct.bloom = bloom;
             classify_struct.base = base;
-            
+            classify_struct.ownership = ownership;
+            if bridge == 23
+                1;
+            end
             ddfs_mods = CLASSIFY(classify_struct);
+            ownership = ddfs_mods.ownership;
+            bottleneck = ddfs_mods.bottleneck;
+            
             
             
             
@@ -129,7 +143,8 @@ while true
                     create_bloom_struct.bottleneck = ddfs_mods.bottleneck;
                     create_bloom_struct.init_right = ddfs_mods.init_right;
                     create_bloom_struct.init_left = ddfs_mods.init_left;
-                    create_bloom_struct.ownership = ddfs_mods.ownership;
+                    create_bloom_struct.ownership = ownership;
+                    create_bloom_struct.marked_vertices = ddfs_mods.marked_vertices;
                     create_bloom_struct.even_level = search_mods.even_level;
                     create_bloom_struct.odd_level = search_mods.odd_level;
                     
@@ -166,10 +181,16 @@ while true
                     [erased, pair, pred_count] = ...
                         AUGERASE(aug_erase_struct);
                     
+                    matching_size = matching_size + 2;
+                    dispstat([num2str(100*matching_size/num_nodes),...
+                        '% of nodes matched']);
+                    
                     search_mods.pred_count = pred_count;
                     
             end
         end
     end
 end
+
+
 end

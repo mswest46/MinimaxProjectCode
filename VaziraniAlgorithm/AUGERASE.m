@@ -1,6 +1,7 @@
 function [erased, pair, pred_count] = ...
     AUGERASE(aug_erase_struct)
 
+test = true;
 
 assert(length(fieldnames(aug_erase_struct))==17);
 graph = aug_erase_struct.graph;
@@ -21,6 +22,10 @@ right_peak = aug_erase_struct.right_peak;
 bloom_ownership = aug_erase_struct.bloom_ownership;
 predecessors = aug_erase_struct.predecessors;
 
+if init_left==1 && init_right == 4
+    1;
+end
+   
 
 if ischar(aug_erase_struct) && strcmp(aug_erase_struct, '-getSubHandles')
     erased = @AUGMENT;
@@ -41,6 +46,12 @@ aug_path = [flip(right_path),left_path];
 
 % augment matching in pair.
 pair = AUGMENT(aug_path,pair);
+for i = 1: length(pair)
+    if length(find(pair==i,2)) > 1
+        error('augmentation is incorrect')
+    end
+end
+
 
 
 erase_struct = v2struct(erased, pred_count, successors);

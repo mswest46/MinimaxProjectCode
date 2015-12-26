@@ -14,6 +14,7 @@ bottleneck = create_bloom_struct.bottleneck;
 init_right = create_bloom_struct.init_right;
 init_left = create_bloom_struct.init_left;
 ownership = create_bloom_struct.ownership;
+marked_vertices = create_bloom_struct.marked_vertices;
 even_level = create_bloom_struct.even_level;
 odd_level = create_bloom_struct.odd_level;
 candidates = create_bloom_struct.candidates;
@@ -23,12 +24,7 @@ bridges = create_bloom_struct.bridges;
 % right_peak, and base.
 level = min(even_level,odd_level);
 bloom_number = bloom_number + 1; % add new bloom.
-bloom_vertices = find(ownership); % all things in trees are bloom.
-
-%check for double registry
-if ~isempty(find(base==bottleneck,1))
-    error('double registry')
-end
+bloom_vertices = find(marked_vertices); % all things in trees are bloom.
 
     
 
@@ -37,6 +33,10 @@ left_peak(bloom_number) = init_left;
 right_peak(bloom_number) = init_right;
 
 for y = bloom_vertices % assign other levels and find extra bridges
+    if ~isnan(bloom(y))
+        error('this vx is in a bloom already')
+    end
+    
     bloom(y) = bloom_number;
     bloom_ownership(y) = ownership(y);
     if mod(level(y),2)==0 % y is outer

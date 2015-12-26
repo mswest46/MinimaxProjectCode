@@ -13,6 +13,9 @@ else
     r = find_path_struct.right_peak(B);
     if find_path_struct.bloom_ownership(vx) == 1;
         p1 = FINDPATH(l, vx, B, find_path_struct); %path from left_peak to vx.
+        if b==7 && vx == 1
+            1;
+        end
         p2 = FINDPATH(r, b, B, find_path_struct); % path from right_peak to base
         path = [flip(p1),p2];
     

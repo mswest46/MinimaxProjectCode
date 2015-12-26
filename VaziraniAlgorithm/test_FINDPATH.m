@@ -2,29 +2,34 @@
 % syntax: function path = function path = FINDPATH(high, low, B, erased, graph, level, ownership, bloom_mods)
 
 %% test subfunction
-clear 
-
-num_nodes = 6;
-erased = false(1,num_nodes); 
-
-predecessors = {[],1,2,3,[4,6],[]};
-
-
-get_unvisited_unerased_predecessors = FINDPATH('-getSubHandles');
-
-visited = false(1,num_nodes);
-
-u = get_unvisited_unerased_predecessors(2, predecessors, visited, erased);
-assert(isequal(u,1),'a');
-u = get_unvisited_unerased_predecessors(1, predecessors, visited, erased);
-assert(isempty(u),'b');
-u = get_unvisited_unerased_predecessors(5, predecessors, visited, erased);
-assert(isequal(u,[4,6]),'c');
-
-visited(6) = true;
-
-u = get_unvisited_unerased_predecessors(5, predecessors, visited, erased);
-assert(isequal(u,4),'d');
+% clear 
+% 
+% adjacency_matrix = zeros(6);
+% row_subs = [1,2,2,3,3,4,4,5,5,6];
+% col_subs = [2,1,3,2,4,3,5,4,6,5];
+% adjacency_matrix(sub2ind(size(adjacency_matrix),row_subs,col_subs)) = 1;
+% graph = create_graph_struct_from_adjacency_matrix(adjacency_matrix);
+% num_nodes = graph.num_nodes;
+% erased = false(1,num_nodes); 
+% 
+% predecessors = {[],1,2,3,[4,6],[]};
+% 
+% 
+% get_unvisited_unerased_predecessors = FINDPATH('-getSubHandles');
+% 
+% visited = false(1,num_nodes);
+% 
+% u = get_unvisited_unerased_predecessors(2, graph, predecessors, visited, erased);
+% assert(isequal(u,1),'a');
+% u = get_unvisited_unerased_predecessors(1, graph, predecessors, visited, erased);
+% assert(isempty(u),'b');
+% u = get_unvisited_unerased_predecessors(5, graph, predecessors, visited, erased);
+% assert(isequal(u,[4,6]),'c');
+% 
+% visited(graph.get_e_from_vs(6,5)) = true;
+% 
+% u = get_unvisited_unerased_predecessors(5, graph, predecessors, visited, erased);
+% assert(isequal(u,4),'d');
 
 %% test with simple path, single backtrack
 clear 
