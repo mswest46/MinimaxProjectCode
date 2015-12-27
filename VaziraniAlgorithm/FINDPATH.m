@@ -15,7 +15,7 @@ if high == low
 end
 
 % unpacking find_path_struct. 
-assert(length(fieldnames(find_path_struct))==10);
+assert(length(fieldnames(find_path_struct))==9);
 graph = find_path_struct.graph;
 erased = find_path_struct.erased;
 ownership = find_path_struct.ownership;
@@ -25,7 +25,6 @@ base = find_path_struct.base;
 % level
 % left_peak
 % right_peak
-% bloom_ownership TODO remove traces of bloom_ownership
 predecessors = find_path_struct.predecessors;
 
 num_edges = graph.num_edges;
@@ -118,21 +117,22 @@ while vx ~= high
     path = [vx, path];
 end
 
-opened = false; 
 path_length = length(path);
 new_path = path;
 
+% calls to open for subpaths
+% TODO probably a better way to deal with the changing size of the array instead
+% of using find
 for l = 1: path_length-1 % -1 because free vx is not in bloom
     if ~isnan(bloom(path(l))) && bloom(path(l)) ~= B
         sub_path = OPEN(path(l), find_path_struct);
         insert = find(new_path==path(l));
         new_path = [new_path(1:insert-1),sub_path,new_path(insert+2:end)];
-        opened = true;
+
     end
 end
-if opened
-    path = new_path;
-end
+path = new_path;
+
 end
 
 

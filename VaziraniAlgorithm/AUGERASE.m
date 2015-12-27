@@ -2,7 +2,7 @@ function [erased, pair, pred_count] = ...
     AUGERASE(aug_erase_struct)
 
 % unpack aug_erase_struct. TODO clean this up. 
-assert(length(fieldnames(aug_erase_struct))==17);
+assert(length(fieldnames(aug_erase_struct))==16);
 graph = aug_erase_struct.graph;
 pair = aug_erase_struct.pair;
 erased = aug_erase_struct.erased;
@@ -18,7 +18,6 @@ bloom = aug_erase_struct.bloom;
 base = aug_erase_struct.base;
 left_peak = aug_erase_struct.left_peak;
 right_peak = aug_erase_struct.right_peak;
-bloom_ownership = aug_erase_struct.bloom_ownership;
 predecessors = aug_erase_struct.predecessors;
 
 
@@ -30,7 +29,7 @@ end
 
 % packing find_path_struct.
 find_path_struct = v2struct(graph,erased,level,ownership,bloom,base, ...
-    left_peak,right_peak,bloom_ownership,predecessors);
+    left_peak,right_peak,predecessors);
 
 % find augmenting path. 
 left_path = FINDPATH(init_left,final_left, nan, find_path_struct); 

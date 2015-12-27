@@ -4,35 +4,24 @@ function pair = find_max_matching(adjacency_matrix, pair)
 % that graph.
 
 % initialize
-
-% all information about the underlying graph will be placed in the struct
-% graph, which will not be modified.
-
-phase_no = 0;
-matching_size = 0;
-dispstat('','init');
-
+phase_no = 0; % number of augmentation phases. just for debugging purposes. 
+matching_size = 0; % for progress updating.
+dispstat('','init'); % for progress updating. 
 graph = create_graph_struct_from_adjacency_matrix(adjacency_matrix);
-dummy = graph.dummy;
+dummy = graph.dummy; 
 num_nodes = graph.num_nodes;
 
 if nargin<2
-    
     pair = dummy * ones(1, num_nodes); % initially all free
+else
+    disp('PAIR INPUTTED');
 end
 
-
 while true
-    
-    
-    
     augmentation_occurred = false;
     erased = false(1,num_nodes);
     
-    
-    % anything modified by search is stuck into the struct search_mods.
     % initialize search_mods.
-    
     search_mods.search_level = -1;
     search_mods.even_level = inf(1,num_nodes);
     search_mods.odd_level = inf(1,num_nodes);
@@ -46,71 +35,46 @@ while true
     search_mods.max_matching_found = false;
     
     
-    % anything modifid by CREATE_BLOOM is stuck into struct
-    % bloom_mods. careful, because CREATE_BLOOM also modifies some
-    % search_mods. Namely, even_level, odd_level, bridges, candidates.
-    
+    % initialize bloom information
     bloom = nan(1,num_nodes);
-    bloom_ownership = zeros(1,num_nodes);
     bloom_number = 0; % the highest index of the blooms already existing.
-    base = []; % the base of the various blooms
-    left_peak = [];
-    right_peak = [];
-    ownership = zeros(1,num_nodes);
+    base = []; % the base of the existing blooms
+    left_peak = []; % the left peak of the existing blooms. 
+    right_peak = []; % the right peak of the existing blooms. 
+    ownership = zeros(1,num_nodes); % 1 means left, 2 means right, 0 means unowned. 
     phase_no = phase_no + 1;
     
     while ~augmentation_occurred
         
+        % pack search_struct
+        search_struct.graph = graph;
+        search_struct.search_mods = search_mods;
+        search_struct.bloom = bloom;
+        search_struct.erased = erased;
+        search_struct.pair = pair;
         
-        search_struct = v2struct(graph,pair,search_mods,bloom, erased);
+        % run SEARCH
         search_mods = SEARCH(search_struct);
-        
         
         if search_mods.max_matching_found
             disp('max matching found');
             return
         end
-        level = min(search_mods.even_level, search_mods.odd_level);
+        
+        % TODO this should be cleaned up. 
+        level = min(search_mods.even_level, search_mods.odd_level);        
+        predecessors = search_mods.predecessors;
+        
         bridges = search_mods.bridges{index(search_mods.search_level)};
         for bridge_no = 1: length(bridges)
-            
             bridge = bridges (bridge_no);
-            
-            if bridge == 6
-                1;
-            end
             
             if isempty(bridge)
                 error('no bridge')
             end
+
             
-            % anything modified by CLASSIFY is stuck into struct ddfs_mods.
-            
-            % prep for CLASSIFY
-            predecessors = search_mods.predecessors;
-            
-            % OUTPUTTED: TODO, ownership should mantain over all search.
-            % ddfs_mods.bloss_or_aug = '';
-            % ddfs_mods.ownership = zeros(1,num_nodes);
-            % ddfs_mods.parent = nan(1,num_nodes);
-            % ddfs_mods.bottleneck = nan;
-            % ddfs_mods.final_left = nan;
-            % ddfs_mods.final_right = nan;
-            % ddfs_mods.init_left = nan;
-            % ddfs_mods.init_right = nan;
-            
-            % classify bridge as belonging to an augmenting path or to a
-            % blossom by running a DDFS
-            
-            %
-            %             graph = classify_struct.graph;
-            %             bridge = classify_struct.bridge;
-            %             predecessors = classify_struct.predecessors;
-            %             level = classify_struct.level;
-            %             erased = classify_struct.erased;
-            %             bloom = classify_struct.bloom;
-            %             base = classify_struct.base;
-            %
+            % pack classify_struct. 
             classify_struct.graph = graph;
             classify_struct.bridge = bridge;
             classify_struct.predecessors = predecessors;
@@ -119,23 +83,21 @@ while true
             classify_struct.bloom = bloom;
             classify_struct.base = base;
             classify_struct.ownership = ownership;
-            if bridge == 23
-                1;
-            end
+
+            % run CLASSIFY
             ddfs_mods = CLASSIFY(classify_struct);
+            
+            % TODO this should be cleaned up.
             ownership = ddfs_mods.ownership;
-            bottleneck = ddfs_mods.bottleneck;
-            
-            
-            
             
             switch ddfs_mods.bloss_or_aug
+                
                 case 'blossom'
                     
+                    % pack create_bloom_struct. 
                     create_bloom_struct.search_level = search_mods.search_level;
                     create_bloom_struct.bloom_number = bloom_number;
                     create_bloom_struct.bloom = bloom;
-                    create_bloom_struct.bloom_ownership = bloom_ownership;
                     create_bloom_struct.graph = graph;
                     create_bloom_struct.left_peak = left_peak;
                     create_bloom_struct.right_peak = right_peak;
@@ -147,18 +109,24 @@ while true
                     create_bloom_struct.marked_vertices = ddfs_mods.marked_vertices;
                     create_bloom_struct.even_level = search_mods.even_level;
                     create_bloom_struct.odd_level = search_mods.odd_level;
-                    
                     create_bloom_struct.candidates = search_mods.candidates;
                     create_bloom_struct.anomalies = search_mods.anomalies;
                     create_bloom_struct.bridges = search_mods.bridges;
                     
-                    % this  changes search_mods as well as bloom_mods.
-                    [bloom_number, bloom, base, left_peak,right_peak, bloom_ownership, ...
-                        search_mods.odd_level, search_mods.even_level, search_mods.candidates, search_mods.bridges] = ...
+                    % run CREATE_BLOOM. this changes search_mods as well as 
+                    % bloom_mods.
+                    [bloom_number, bloom, base, left_peak,right_peak, ...
+                        search_mods.odd_level, ...
+                        search_mods.even_level, search_mods.candidates, ...
+                        search_mods.bridges] = ...
                         CREATE_BLOOM(create_bloom_struct);
+                    
+                    % TODO clean this up again. 
                     level = min(search_mods.even_level,search_mods.odd_level);
                     
                 case 'augment'
+                    
+                    % pack aug_erase_struct
                     aug_erase_struct.graph = graph;
                     aug_erase_struct.pair = pair;
                     aug_erase_struct.erased = erased;
@@ -174,23 +142,22 @@ while true
                     aug_erase_struct.base = base;
                     aug_erase_struct.left_peak = left_peak;
                     aug_erase_struct.right_peak = right_peak;
-                    aug_erase_struct.bloom_ownership = bloom_ownership;
                     aug_erase_struct.predecessors = predecessors;
                     
-                    augmentation_occurred = true;
+                    % run AUGERASE
                     [erased, pair, pred_count] = ...
                         AUGERASE(aug_erase_struct);
+                    augmentation_occurred = true;
                     
+                    % display progress
                     matching_size = matching_size + 2;
                     dispstat([num2str(100*matching_size/num_nodes),...
                         '% of nodes matched']);
                     
+                    % TODO clean up. 
                     search_mods.pred_count = pred_count;
-                    
             end
         end
     end
 end
-
-
 end

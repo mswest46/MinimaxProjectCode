@@ -3,7 +3,6 @@
 %  search_level = create_bloom_struct.search_level;
 %  bloom_number = create_bloom_struct.bloom_number;
 %  bloom = create_bloom_struct.bloom;
-%  bloom_ownership = create_bloom_struct.bloom_ownership;
 %  left_peak = create_bloom_struct.left_peak;
 %  right_peak = create_bloom_struct.right_peak;
 %  base = create_bloom_struct.base;
@@ -31,7 +30,6 @@ dummy = graph.dummy;
 search_level = 4;
 bloom_number = 0;
 bloom = nan(1,num_nodes);
-bloom_ownership = zeros(1,num_nodes);
 left_peak = [];
 right_peak = [];
 base = [];
@@ -55,11 +53,11 @@ bridges = cell(1,num_nodes);
 
 level = min(old_odd_level, old_even_level);
 
-create_bloom_struct = v2struct(graph, search_level, bloom_number,bloom,bloom_ownership,...
+create_bloom_struct = v2struct(graph, search_level, bloom_number,bloom,...
     left_peak,right_peak,base,bottleneck,init_left,init_right,ownership, marked_vertices,...
     even_level, odd_level, candidates, anomalies, bridges);
 
-[bloom_number, bloom, base, left_peak,right_peak, bloom_ownership, ...
+[bloom_number, bloom, base, left_peak,right_peak,  ...
     odd_level, even_level, candidates, bridges] = ...
     CREATE_BLOOM(create_bloom_struct);
 
@@ -69,7 +67,6 @@ assert(isequal(bloom([4,5,6,7]),[1,1,1,1]), '2');
 assert(base == 3, '3');
 assert(left_peak ==6, '4');
 assert(right_peak == 7, '5');
-assert(isequal(bloom_ownership,ownership), '6');
 nol = old_odd_level; nol([6,7]) = 5; 
 assert(isequal(odd_level, nol),'7');
 nel = old_even_level; nel([4,5]) = 6;

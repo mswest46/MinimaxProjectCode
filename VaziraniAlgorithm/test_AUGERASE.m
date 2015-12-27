@@ -19,7 +19,6 @@
 % base = aug_erase_struct.base;
 % left_peak = aug_erase_stuct.left_peak;
 % right_peak = aug_erase_struct.right_peak;
-% bloom_ownership = aug_erase_struct.bloom_ownership;
 % predecessors = aug_erase_struct.predecessors;
 
 %% no blooms
@@ -57,12 +56,11 @@ bloom = nan(1,num_nodes);
 base = [];
 left_peak = [];
 right_peak = [];
-bloom_ownership = nan(1,num_nodes);
 predecessors = {[],[],1,2,3,4,5,6};
 
 aug_erase_struct = v2struct(graph,pair,erased,pred_count,successors,...
     init_left,init_right,final_left,final_right,level,ownership,bloom,...
-    base,left_peak,right_peak,bloom_ownership,predecessors);
+    base,left_peak,right_peak,predecessors);
 [erased, pair, pred_count] = AUGERASE(aug_erase_struct);
 
 assert(all(erased));
@@ -91,7 +89,6 @@ assert(isequal(pair,[3,4,1,2,7,8,5,6]));
 % base = aug_erase_struct.base;
 % left_peak = aug_erase_stuct.left_peak;
 % right_peak = aug_erase_struct.right_peak;
-% bloom_ownership = aug_erase_struct.bloom_ownership;
 % predecessors = aug_erase_struct.predecessors;
 
 %% blooms
@@ -124,13 +121,11 @@ init_right = 14;
 final_left = 1;
 final_right = 2;
 level = [0,0,1,1,2,2,3,3,3,3,4,4,5,5];
-ownership = [1,2,1,2,1,2,1,1,2,2,1,2,1,2];
+ownership = [1,2,1,2,1,2,1,2,1,2,1,2,1,2];
 bloom = nan(1,num_nodes); bloom([7,8]) = 1; bloom([9,10]) = 2;
 base = [5,6];
 left_peak = [7,9];
 right_peak = [8,10];
-bloom_ownership = nan(1,num_nodes); bloom_ownership([7,9]) = 1; ...
-    bloom_ownership([8,10]) = 2;
 predecessors = {[],[],1,2,3,4,5,5,6,6,7,9,11,12};
 
 % close all
@@ -140,7 +135,7 @@ predecessors = {[],[],1,2,3,4,5,5,6,6,7,9,11,12};
 
 aug_erase_struct = v2struct(graph,pair,erased,pred_count,successors,...
     init_left,init_right,final_left,final_right,level,ownership,bloom,...
-    base,left_peak,right_peak,bloom_ownership,predecessors);
+    base,left_peak,right_peak,predecessors);
 [erased, pair, pred_count] = AUGERASE(aug_erase_struct);
 
 assert(all(erased));
