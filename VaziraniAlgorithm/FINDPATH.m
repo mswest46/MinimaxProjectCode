@@ -119,10 +119,14 @@ while vx ~= high
 end
 
 opened = false; 
-for l = 1: length(path) - 1
+path_length = length(path);
+new_path = path;
+
+for l = 1: path_length-1 % -1 because free vx is not in bloom
     if ~isnan(bloom(path(l))) && bloom(path(l)) ~= B
         sub_path = OPEN(path(l), find_path_struct);
-        new_path = [path(1:l-1),sub_path, path(l+2:end)];
+        insert = find(new_path==path(l));
+        new_path = [new_path(1:insert-1),sub_path,new_path(insert+2:end)];
         opened = true;
     end
 end

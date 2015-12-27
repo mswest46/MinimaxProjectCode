@@ -165,3 +165,41 @@ find_path_struct = v2struct(predecessors, graph, erased, ...
 
 path = FINDPATH(high,low,B,find_path_struct);
 assert(isequal(path,[8,4,6,7,5,3,2,1]));
+
+
+%% two blooms
+
+% |_7
+% |/5
+% | 4
+% |_3
+% |/1
+%   0
+% 
+adjacency_matrix = zeros(8);
+row_subs = [1,1,2,2,2,3,3,4,4,5,5,5,6,6,6,7,7,8];
+col_subs = [2,3,1,3,4,1,2,2,5,4,6,7,5,7,8,5,6,6];
+adjacency_matrix(sub2ind(size(adjacency_matrix), row_subs, col_subs)) = 1;
+graph = create_graph_struct_from_adjacency_matrix(adjacency_matrix);
+num_nodes = graph.num_nodes;
+
+high = 8;
+low = 1;
+B = nan;
+erased = false(1,num_nodes); 
+level = [0,1,1,3,4,5,5,7];
+ownership = ones(1,num_nodes); ownership([3,7]) = 2;
+bloom = nan(1,num_nodes); bloom([2,3]) = 1; bloom([6,7]) = 2;
+bloom_ownership = nan(1,num_nodes); bloom_ownership([2,6]) = 1; ...
+    bloom_ownership([3,7]) = 2;
+left_peak = [2,6];
+right_peak = [3,7];
+base = [1,5];
+predecessors = {[],1,1,2,4,5,5,6};
+
+find_path_struct = v2struct(predecessors, graph, erased, ...
+    level,ownership,bloom,bloom_ownership,base,left_peak,right_peak);
+
+path = FINDPATH(high,low,B,find_path_struct);
+
+assert(isequal(path,[8,6,7,5,4,2,3,1]));
