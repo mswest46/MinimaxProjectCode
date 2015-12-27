@@ -1,16 +1,14 @@
 function search_mods = SEARCH(search_struct)
 
+% unpack search_struct
 graph = search_struct.graph;
 pair = search_struct.pair;
 search_mods = search_struct.search_mods;
 bloom = search_struct.bloom;
 erased = search_struct.erased;
 
-
-% initial call will be: 
-
+% unpack search_mods. 
 assert(length(fieldnames(search_mods)) == 11);
-
 search_level = search_mods.search_level;
 even_level = search_mods.even_level;
 odd_level = search_mods.odd_level;
@@ -22,23 +20,22 @@ anomalies = search_mods.anomalies;
 candidates = search_mods.candidates;
 initial_flag = search_mods.initial_flag;
 max_matching_found = search_mods.max_matching_found;
-% search_mods.search_level = 0;
-% search_mods.even_level = inf(1,num_nodes);
-% search_mods.odd_level = inf(1,num_nodes);
-% search_mods.predecessors = cell(1,num_nodes);
-% search_mods.successors = cell(1,num_nodes);
-% search_mods.pred_count = zeros(1,num_nodes);
-% search_mods.bridges = cell(1,num_nodes);
-% search_mods.anomalies = cell(1,num_nodes);
-% search_mods.candidates = cell(1,num_nodes);
-% search_mods.initial_flag = true;
-bridge_found = false;
 
-if initial_flag
+% initialize
+bridge_found = false;
+if initial_flag % first run we need to put free vxs in level 0 candidates. 
     candidates{index(0)} = find(pair==graph.dummy);
     even_level(pair == graph.dummy) = 0;
 end
-search_happened = false;
+
+% this is a weird edge case. If we have searched through bridges and found
+% only blossoms, we're going to call SEARCH again without resetting. If
+% there are no candidates in the next level however, we should have found a
+% max matching. Thus, if ~search_happened, we want to be done. To do this
+% we need to increment search level outside of the loop.  TODO make this
+% more intuitive and clean.
+search_happened = false; 
+
 while initial_flag || ...
         (~bridge_found && ~isempty(candidates{index(search_level)}))
     search_happened = true;
@@ -46,7 +43,7 @@ while initial_flag || ...
     search_level = search_level + 1;
     if mod(search_level,2)==0 %search_level is even.
         for v = candidates{index(search_level)}
-            targets = find( ~erased & graph.adjacency_matrix(v,:)); %maybe better way, neighbors cell for instance
+            targets = find( ~erased & graph.adjacency_matrix(v,:)); % TODO maybe better way, neighbors cell for instance
             targets = setdiff(targets, pair(v));
             for u = targets
                 if even_level(u) < inf
@@ -98,23 +95,22 @@ while initial_flag || ...
         end
     end
 end
-% 
-% if ~(initial_flag || ...
-%         (~bridge_found && ~isempty(candidates{index(search_level)})))
-%     search_level = search_level+1;
-% end
 
+% TODO could be fixed
 if ~search_happened
     search_level = search_level + 1;
 end
-    
+
+% remove duplicates. 
 bridges{index(search_level)} = ...
     unique(bridges{index(search_level)});
 
+% TODO make some indicator variables to improve this.
 if isempty(bridges{index(search_level)})
     max_matching_found = true;
 end
 
+% repack search_mods. 
 search_mods.search_level = search_level;
 search_mods.even_level = even_level;
 search_mods.odd_level = odd_level ;
@@ -126,7 +122,6 @@ search_mods.anomalies =  anomalies;
 search_mods.candidates = candidates;
 search_mods.initial_flag = initial_flag;
 search_mods.max_matching_found = max_matching_found;
-
 
 end
 

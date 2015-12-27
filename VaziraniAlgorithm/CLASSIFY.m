@@ -1,6 +1,7 @@
 function ddfs_mods = ...
     CLASSIFY(classify_struct)
 
+% unpack classify_struct. 
 assert(length(fieldnames(classify_struct))==8);
 graph = classify_struct.graph;
 bridge = classify_struct.bridge;
@@ -10,22 +11,19 @@ erased = classify_struct.erased;
 bloom = classify_struct.bloom;
 base = classify_struct.base;
 ownership = classify_struct.ownership;
-input_ownership = ownership;
 
-
+input_ownership = ownership; % for determining visitation later. 
 num_nodes = graph.num_nodes;
 num_edges = graph.num_edges;
 
+% initialize part 1
 [init_left, init_right] = graph.get_vs_from_e(bridge);
-left_parent = nan(1,num_nodes); % we start with no knowledge about the trees.
+left_parent = nan(1,num_nodes); 
 right_parent = nan(1,num_nodes);
-marked_vertices = false(1,num_nodes);
 bloom_discovered = false;
 used_edges = false(1,num_edges);
 
-
-
-% OUTPUTTED in case of early return
+% in case of early return, pack ddfs_mods. TODO eliminate some of these. 
 ddfs_mods.bloss_or_aug = '';
 ddfs_mods.marked_vertices = false(1,num_nodes);
 ddfs_mods.ownership = ownership;
@@ -36,8 +34,6 @@ ddfs_mods.final_left = nan;
 ddfs_mods.final_right = nan;
 ddfs_mods.init_left = init_left;
 ddfs_mods.init_right = init_right;
-
-
 
 % one of the top vxs has been erased
 if erased(init_left) || erased(init_right)
@@ -67,46 +63,39 @@ if right_COA == left_COA
     return
 end
 
+% initialize part 2
 ownership(left_COA) = 1;
 ownership(right_COA) = 2;
 DCV = nan;
 barrier = right_COA;
-% DDFS
 
+% condition for stopping: if we've discovered a bloom or we've reached two
+% different free vertices. 
 stop_when = bloom_discovered || ...
     (level(left_COA)==0 && level(right_COA) == 0 && left_COA~=right_COA);
-    
-if init_left ==4 && init_right == 8
-    1;
-end
 
-while ~ stop_when  % we haven't gotten to a bloom or free vxs.
-    
+% run DDFS
+while ~stop_when 
     if level(left_COA) >= level(right_COA)
         LEFT_DFS;
     else
         RIGHT_DFS;
     end
-
+% reset the condition
 stop_when = bloom_discovered || ...
     (level(left_COA)==0 && level(right_COA) == 0 && left_COA~=right_COA);
 end
 
 if bloom_discovered
-    ownership(DCV) = 0;
-end
-
-if bloom_discovered
     ddfs_mods.bloss_or_aug = 'blossom';
+    ownership(DCV) = 0;
 else
     ddfs_mods.bloss_or_aug = 'augment';
 end
 
-marked_vertices = (ownership > 0 & input_ownership == 0); % new markings
-if any(~isnan(bloom) & marked_vertices)
-    error('hey')
-end
+marked_vertices = (ownership > 0 & input_ownership == 0); % newly marked
 
+% pack ddfs_mods. 
 ddfs_mods.ownership = ownership;
 ddfs_mods.marked_vertices = marked_vertices;
 ddfs_mods.left_parent = left_parent;
@@ -152,39 +141,6 @@ ddfs_mods.init_right = init_right;
         end
     end
 
-
-%     function LEFT_DFS
-%         edges = get_unused_unerased_predecessors_of(left_COA, predecessors);
-%         while ~isempty(edges)
-%             % return statement means we'll actually return when we
-%             % find an unowned predecessor
-%             pred = edges(end);
-%             edges = edges(1:end-1);
-%             used_edges(graph.get_e_from_vs(left_COA,pred)) = true;
-%             if ~isnan(bloom(pred))
-%
-%                 pred = base_star(bloom(pred), bloom, base); % jump to base.
-%
-%
-%             end
-%             if ~ownership(pred)
-%                 ownership(pred) = 1; %left claims
-%                 parent(pred) = left_COA;
-%                 left_COA = pred;
-%                 return
-%             elseif pred==right_COA
-%                 DCV = pred;
-%             end
-%         end
-%         % we only get here when there are no unowned, unerased
-%         % predecessors of left_COA via unused edges.
-%         if left_COA == init_left
-%             bloom_discovered = true;
-%         else
-%             left_COA = parent(left_COA); %backtrack
-%         end
-%     end
-
     function RIGHT_DFS
         preds = get_unused_unerased_predecessors_of(right_COA,predecessors);
         if isempty(preds)
@@ -218,26 +174,66 @@ ddfs_mods.init_right = init_right;
             else % u is owned already
                 used_edges(edge_for_marking) = true;
             end
-            
-            
-            
         end
     end
 
+    function preds = get_unused_unerased_predecessors_of(vx, predecessors)
+        preds = [];
+        for pred = predecessors{vx}
+            e = graph.get_e_from_vs(vx,pred);
+            if ~used_edges(e) && ~erased(pred)
+                preds = [preds,pred];
+            end
+        end
+        
+    end
+end
+
+
+% TODO improve this using the algorithm mentioned in thingy. 
+function b = base_star(B, bloom, base)
+b = base(B);
+while ~isnan(bloom(b))
+    b = base(bloom(b));
+end
+end
+
+
+
+
+
+%     function LEFT_DFS
+%         edges = get_unused_unerased_predecessors_of(left_COA, predecessors);
+%         while ~isempty(edges)
+%             % return statement means we'll actually return when we
+%             % find an unowned predecessor
+%             pred = edges(end);
+%             edges = edges(1:end-1);
+%             used_edges(graph.get_e_from_vs(left_COA,pred)) = true;
+%             if ~isnan(bloom(pred))
 %
-% u = find(adjacency_matrix(:,green_position),1);
-%         if isempty(u)
-%             if green_position == barrier
-%                 % green returns to DCV and takes ownership, red does its
-%                 % backtrack thang, and barrier moves to DCV
-%                 barrier = DCV;
-%                 green_position = DCV;
-%                 ownership(green_position) = 2;
-%                 red_position = parent(red_position);
-%             else % BACKTRACK
-%                 green_position = parent(green_position);
+%                 pred = base_star(bloom(pred), bloom, base); % jump to base.
+%
+%
 %             end
-%
+%             if ~ownership(pred)
+%                 ownership(pred) = 1; %left claims
+%                 parent(pred) = left_COA;
+%                 left_COA = pred;
+%                 return
+%             elseif pred==right_COA
+%                 DCV = pred;
+%             end
+%         end
+%         % we only get here when there are no unowned, unerased
+%         % predecessors of left_COA via unused edges.
+%         if left_COA == init_left
+%             bloom_discovered = true;
+%         else
+%             left_COA = parent(left_COA); %backtrack
+%         end
+%     end
+
 %     function RIGHT_DFS
 %         edges = get_unused_unerased_predecessors_of(right_COA, predecessors);
 %         while ~isempty(edges)
@@ -268,22 +264,4 @@ ddfs_mods.init_right = init_right;
 %         end
 %     end
 
-    function edges = get_unused_unerased_predecessors_of(vx, predecessors)
-        edges = [];
-        for pred = predecessors{vx}
-            e = graph.get_e_from_vs(vx,pred);
-            if ~used_edges(e) && ~erased(pred)
-                edges = [edges,pred];
-            end
-        end
-        
-    end
-end
-
-function b = base_star(B, bloom, base)
-b = base(B);
-while ~isnan(bloom(b))
-    b = base(bloom(b));
-end
-end
 
