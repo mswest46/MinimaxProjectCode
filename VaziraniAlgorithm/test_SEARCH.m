@@ -2,7 +2,7 @@
 
 %% initial call with no pairing
 
-clear 
+clear
 
 adjacency_matrix = zeros(12);
 row_subs = [1,2,2,3,3,3,4,4,5,5,5 ,6,6,7,7,8,9,9 ,10,10,11,11,12,12];
@@ -22,7 +22,7 @@ search_mods.bridges = cell(1,num_nodes);
 search_mods.anomalies = cell(1,num_nodes);
 search_mods.candidates = cell(1,num_nodes);
 search_mods.initial_flag = true;
-search_mods.index_fun = @ (search_level) search_level + 1;
+search_mods.max_matching_found = false;
 
 bloom = nan(1,num_nodes);
 pair = dummy * ones(1,num_nodes);
@@ -34,7 +34,7 @@ search_mods = SEARCH(search_struct);
 
 %% initial call with pairing
 
-clear 
+clear
 
 adjacency_matrix = zeros(12);
 row_subs = [1,2,2,3,3,3,4,4,5,5,5 ,6,6,7,7,8,9,9 ,10,10,11,11,12,12];
@@ -48,11 +48,6 @@ height = inf(1,num_nodes); height([1,8]) = 0; ...
     height([3,10]) = 2; height([6,7,12]) = 4;  height([2,9]) = 1;...
     height([4,5,11]) = 3;
 
-
-close all;
-figure;
-plot_matching(adjacency_matrix,height,'');
-
 search_mods.search_level = -1;
 search_mods.even_level = inf(1,num_nodes);
 search_mods.odd_level = inf(1,num_nodes);
@@ -63,7 +58,7 @@ search_mods.bridges = cell(1,num_nodes);
 search_mods.anomalies = cell(1,num_nodes);
 search_mods.candidates = cell(1,num_nodes);
 search_mods.initial_flag = true;
-search_mods.index_fun = @ (search_level) search_level + 1;
+search_mods.max_matching_found = false;
 
 bloom = nan(1,num_nodes);
 pair = [dummy, 3,2,6,7,4,5,dummy,10,9,12,11];
@@ -77,5 +72,3 @@ search_mods = SEARCH(search_struct);
 
 assert(search_mods.search_level == 4, 'a');
 assert(search_mods.bridges{5} == graph.get_e_from_vs(6,7), 'b');
-
-assert(search_mods.candidates{search_mods.index_fun(5)}==5}
