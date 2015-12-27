@@ -19,14 +19,14 @@ odd_level = create_bloom_struct.odd_level;
 candidates = create_bloom_struct.candidates;
 anomalies = create_bloom_struct.anomalies;
 bridges = create_bloom_struct.bridges;
-% define bloom: give a number, assign it left_peak,
-% right_peak, and base.
+
+
 level = min(even_level,odd_level);
-bloom_number = bloom_number + 1; % add new bloom.
 bloom_vertices = find(marked_vertices); % all things in trees are bloom.
 
-    
-
+% define bloom: give a number, assign it left_peak,
+% right_peak, and base.
+bloom_number = bloom_number + 1; % add new bloom.
 base(bloom_number) = bottleneck;
 left_peak(bloom_number) = init_left;
 right_peak(bloom_number) = init_right;
@@ -35,7 +35,6 @@ for y = bloom_vertices % assign other levels and find extra bridges
     if ~isnan(bloom(y))
         error('this vx is in a bloom already')
     end
-    
     bloom(y) = bloom_number;
     if mod(level(y),2)==0 % y is outer
         odd_level(y) = 2*search_level + 1 - ...
