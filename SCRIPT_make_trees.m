@@ -27,20 +27,17 @@ if ~exist(save_dir,'dir')
     mkdir(save_dir);
 end
 
-% Get a unique run directory
-temp = get_files_in_directory_matching_string(save_dir,'Run');
+% Get a unique sample directory
+temp = get_files_in_directory_matching_string(save_dir,'Sample');
 if isempty(temp)
     run_no = 000;
 else
     numbers = [];
-    for n=1:length(temp);numbers = [numbers, str2double(temp{n}(4:6))];end;
+    for n=1:length(temp);numbers = [numbers, str2double(temp{n}(7:9))];end;
     run_no = max(numbers)+1;
 end
-time_format = 'yy-mm-dd-HH-MM-SS';
-time_now = datestr(fix(clock), time_format);
-% This is where the file name is generated. It's Run followed by a unique
-% integer, and then a time/date string which tells you when you created it.
-run_name = sprintf('Run%03d_%s',run_no, time_now);
+
+run_name = sprintf('Sample%03d',run_no);
 
 
 folder = fullfile(save_dir, run_name);
