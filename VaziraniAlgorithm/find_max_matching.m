@@ -13,7 +13,7 @@ num_nodes = graph.num_nodes;
 
 if nargin<2
     dispstat('greedy algorithm doing work');pause(.3);
-    pair = greedy_algorithm(graph); % initially all free
+    pair = greedy_algorithm(adjacency_matrix); % initially all free
     matching_size = sum(pair<dummy);
     dispstat(['greedy algorithm matched ', num2str(100*matching_size/num_nodes),...
         '% of nodes'], 'keepthis'); 
