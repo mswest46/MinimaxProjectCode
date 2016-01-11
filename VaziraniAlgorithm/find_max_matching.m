@@ -1,20 +1,26 @@
-function pair = find_max_matching(adjacency_matrix, pair)
+function [pair] = find_max_matching(adjacency_matrix, pair)
 
 % input the adjacency matrix of graph, output a maximal matching vector on
 % that graph.
 
 % initialize
-phase_no = 0; % number of augmentation phases. just for debugging purposes. 
-matching_size = 0; % for progress updating.
-dispstat('','init'); % for progress updating. 
+phase_no = 0; % number of augmentation phases. just for debugging purposes.
+dispstat('','init'); % for progress updating.
 graph = create_graph_struct_from_adjacency_matrix(adjacency_matrix);
-dummy = graph.dummy; 
+dummy = graph.dummy;
 num_nodes = graph.num_nodes;
 
+
 if nargin<2
-    pair = dummy * ones(1, num_nodes); % initially all free
+    dispstat('greedy algorithm doing work');pause(.3);
+    pair = greedy_algorithm(graph); % initially all free
+    matching_size = sum(pair<dummy);
+    dispstat(['greedy algorithm matched ', num2str(100*matching_size/num_nodes),...
+        '% of nodes'], 'keepthis'); 
+    
 else
-    disp('PAIR INPUTTED');
+    disp('pair inputted');
+    matching_size = sum(pair<dummy);
 end
 
 while true
@@ -39,10 +45,12 @@ while true
     bloom = nan(1,num_nodes);
     bloom_number = 0; % the highest index of the blooms already existing.
     base = []; % the base of the existing blooms
-    left_peak = []; % the left peak of the existing blooms. 
-    right_peak = []; % the right peak of the existing blooms. 
-    ownership = zeros(1,num_nodes); % 1 means left, 2 means right, 0 means unowned. 
+    left_peak = []; % the left peak of the existing blooms.
+    right_peak = []; % the right peak of the existing blooms.
+    ownership = zeros(1,num_nodes); % 1 means left, 2 means right, 0 means unowned.
     phase_no = phase_no + 1;
+    dispstat(['phase number ', num2str(phase_no)]);
+    pause(1);
     
     while ~augmentation_occurred
         
@@ -54,27 +62,30 @@ while true
         search_struct.pair = pair;
         
         % run SEARCH
+        dispstat('searching');
         search_mods = SEARCH(search_struct);
+        dispstat('searched');
         
         if search_mods.max_matching_found
-            disp('max matching found');
+            disp(['max matching found in ', num2str(phase_no), ' phases']);
             return
         end
         
-        % TODO this should be cleaned up. 
-        level = min(search_mods.even_level, search_mods.odd_level);        
+        % TODO this should be cleaned up.
+        level = min(search_mods.even_level, search_mods.odd_level);
         predecessors = search_mods.predecessors;
         
         bridges = search_mods.bridges{index(search_mods.search_level)};
         for bridge_no = 1: length(bridges)
+            
             bridge = bridges (bridge_no);
             
             if isempty(bridge)
                 error('no bridge')
             end
-
             
-            % pack classify_struct. 
+            
+            % pack classify_struct.
             classify_struct.graph = graph;
             classify_struct.bridge = bridge;
             classify_struct.predecessors = predecessors;
@@ -83,7 +94,7 @@ while true
             classify_struct.bloom = bloom;
             classify_struct.base = base;
             classify_struct.ownership = ownership;
-
+            
             % run CLASSIFY
             ddfs_mods = CLASSIFY(classify_struct);
             
@@ -94,7 +105,7 @@ while true
                 
                 case 'blossom'
                     
-                    % pack create_bloom_struct. 
+                    % pack create_bloom_struct.
                     create_bloom_struct.search_level = search_mods.search_level;
                     create_bloom_struct.bloom_number = bloom_number;
                     create_bloom_struct.bloom = bloom;
@@ -113,7 +124,7 @@ while true
                     create_bloom_struct.anomalies = search_mods.anomalies;
                     create_bloom_struct.bridges = search_mods.bridges;
                     
-                    % run CREATE_BLOOM. this changes search_mods as well as 
+                    % run CREATE_BLOOM. this changes search_mods as well as
                     % bloom_mods.
                     [bloom_number, bloom, base, left_peak,right_peak, ...
                         search_mods.odd_level, ...
@@ -121,7 +132,7 @@ while true
                         search_mods.bridges] = ...
                         CREATE_BLOOM(create_bloom_struct);
                     
-                    % TODO clean this up again. 
+                    % TODO clean this up again.
                     level = min(search_mods.even_level,search_mods.odd_level);
                     
                 case 'augment'
@@ -148,13 +159,10 @@ while true
                     [erased, pair, pred_count] = ...
                         AUGERASE(aug_erase_struct);
                     augmentation_occurred = true;
-                    
-                    % display progress
                     matching_size = matching_size + 2;
                     dispstat([num2str(100*matching_size/num_nodes),...
                         '% of nodes matched']);
-                    
-                    % TODO clean up. 
+                    % TODO clean up.
                     search_mods.pred_count = pred_count;
             end
         end

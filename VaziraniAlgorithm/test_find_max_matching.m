@@ -1,3 +1,5 @@
+%% TODO a lot of different random graphs. Problems may be lurking. 
+
 %% test_find_max_matching
 adjacency_matrix = zeros(12);
 row_subs = [1,2,2,3,3,3,4,4,5,5,5 ,6,6,7,7,8,9,9 ,10,10,11,11,12,12];
@@ -48,7 +50,7 @@ pair = find_max_matching(adjacency_matrix);
 clear
 
 distribution.type = 'custom';
-params = [0,.7,0,0,0,0,0,0,0,.2,.1];
+params = [0,0,.7,0,0,0,0,0,0,0,.2,.1];
 distribution.params = size_bias(params);
 num_nodes = 1000;
 for i = 1:4
@@ -73,12 +75,16 @@ end
 clear
 
 distribution.type = 'custom';
-params = [0,.7,0,0,0,0,0,0,0,.2,.1];
-distribution.params = size_bias(params);
+% params = [0,.7,0,0,0,0,0,0,0,.2,.1];
+% distribution.params = size_bias(params);
 num_nodes = 1000;
 dummy = num_nodes +1;
 
 for i = 1:10
+    params = rand(1,30);
+    params = params/sum(params);
+    distribution.params = size_bias(params);
+    
     adjacency_matrix = create_configuration_model(num_nodes,distribution);
     pair = find_max_matching(adjacency_matrix);
     matching_size = sum(pair<length(pair)+1);

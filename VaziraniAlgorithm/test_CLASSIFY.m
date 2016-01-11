@@ -57,8 +57,8 @@ v2struct(ddfs_mods);
 assert(strcmp(bloss_or_aug, 'augment'))
 test_own = zeros(1,num_nodes); test_own([1,3,5,7]) = 1; test_own([2,4,6,8]) = 2;
 assert(isequal(ownership, test_own));
-assert(isequaln(left_parent, [3,nan,5,nan,7,nan,nan,nan]));
-assert(isequaln(right_parent, [nan,4,nan,6,nan,8,nan,nan]));
+assert(isequal(left_parent, [3,0,5,0,7,0,0,0]));
+assert(isequal(right_parent, [0,4,0,6,0,8,0,0]));
 assert(isequaln(bottleneck, nan));
 assert(isequal(final_left,1));
 assert(isequal(final_right,2));
@@ -104,8 +104,8 @@ assert(strcmp(bloss_or_aug, 'augment'))
 test_own = zeros(1,num_nodes); test_own([13,11,5,3,1]) = 1; ...
     test_own([14,12,6,4,2]) = 2; test_own([7,9]) = 1; test_own([8,10]) = 2;
 assert(isequal(ownership, test_own));
-test_lp = nan(1,num_nodes); test_lp([1,3,5,11]) = [3,5,11,13];
-test_rp = nan(1,num_nodes); test_rp([2,4,6,12]) = [4,6,12,14];
+test_lp = zeros(1,num_nodes); test_lp([1,3,5,11]) = [3,5,11,13];
+test_rp = zeros(1,num_nodes); test_rp([2,4,6,12]) = [4,6,12,14];
 assert(isequaln(left_parent, test_lp));
 assert(isequaln(right_parent, test_rp));
 assert(isequaln(bottleneck, nan));
@@ -173,8 +173,8 @@ v2struct(ddfs_mods);
 assert(strcmp(bloss_or_aug, 'blossom'))
 test_own(6) = 1;test_own(7) = 2;
 assert(isequal(ownership, test_own));
-test_lp = nan(1,num_nodes); test_lp(1) = 6;
-test_rp = nan(1,num_nodes); test_rp(1) = 7;
+test_lp = zeros(1,num_nodes); test_lp(1) = 6;
+test_rp = zeros(1,num_nodes); test_rp(1) = 7;
 assert(isequaln(left_parent, test_lp));
 assert(isequaln(right_parent, test_rp));
 assert(isequaln(bottleneck, 1));

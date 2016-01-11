@@ -28,8 +28,15 @@ if ischar(aug_erase_struct) && strcmp(aug_erase_struct, '-getSubHandles')
 end
 
 % packing find_path_struct.
-find_path_struct = v2struct(graph,erased,level,ownership,bloom,base, ...
-    left_peak,right_peak,predecessors);
+find_path_struct.graph = graph;
+find_path_struct.erased = erased;
+find_path_struct.level = level;
+find_path_struct.ownership = ownership;
+find_path_struct.bloom = bloom;
+find_path_struct.base = base;
+find_path_struct.left_peak = left_peak;
+find_path_struct.right_peak = right_peak;
+find_path_struct.predecessors = predecessors;
 
 % find augmenting path. 
 left_path = FINDPATH(init_left,final_left, nan, find_path_struct); 
@@ -40,7 +47,9 @@ aug_path = [flip(right_path),left_path];
 pair = AUGMENT(aug_path,pair);
 
 % pack erase_struct. 
-erase_struct = v2struct(erased, pred_count, successors);
+erase_struct.erased = erased;
+erase_struct.pred_count = pred_count;
+erase_struct.successors = successors;
 
 % erase affected vertices. 
 [erased,pred_count] = ERASE(aug_path,erase_struct);

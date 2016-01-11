@@ -32,7 +32,7 @@ num_nodes = graph.num_nodes;
 
 %initialization.
 visited_vertices = false(1,num_nodes);
-parent = nan(1,num_nodes);
+parent = zeros(1,num_nodes);
 
 % when we start out inside a bloom, it will mess with backtracking. So we
 % handle this edge case before doing anything. 
