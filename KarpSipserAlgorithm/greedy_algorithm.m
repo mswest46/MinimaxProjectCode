@@ -14,30 +14,68 @@ neighbors = G.neighbors;
 phase = 1;
 matching_size = 0;
 dispstat('','init');
-shortcut_pendant = nan;
+% shortcut_pendant = nan;
+% backup_pendant = nan;
+
+K = 1000;
+k = 1;
+shortcut_pendants = nan(1,K);
 
 for i = 1:num_nodes
     if isempty(neighbors{i})
         removed_vxs(i) = true;
     elseif length(neighbors{i}) == 1;
         pendants(i) = true;
-        shortcut_pendant = i;
+        if k <= K
+            shortcut_pendants(k) = i;
+        end
     end
     
 end
 
 while ~all(removed_vxs) % the graph still has some vxs.
-    if ~isnan(shortcut_pendant) && pendants(shortcut_pendant)
-        v = shortcut_pendant;
-    else
-        v = find(pendants,1);
+    no_pendants = false;
+    pendant_chosen = false;
+    
+    for i = 1:K
+        if ~isnan(shortcut_pendants(i)) && pendants(shortcut_pendants(i))
+            v = shortcut_pendants(i);
+            pendant_chosen = true;
+            break
+        end
     end
-    if ~isempty(v)
+    
+    if ~pendant_chosen
+        % we have no pendants in the shortcut pendants. As in, all the
+        % shortcut pendants are not pendants.
+        temp = nan(1,K);
+        shortcut_pendants = find(pendants,K);
+        if isempty(shortcut_pendants)
+            no_pendants = true;
+        end
+        temp(1: length(shortcut_pendants)) = shortcut_pendants;
+        shortcut_pendants = temp;
+        if ~no_pendants
+            v = shortcut_pendants(1);
+        end
+        
+    end
+    
+    
+    %     if ~isnan(shortcut_pendant) && pendants(shortcut_pendant)
+    %         v = shortcut_pendant;
+    %     elseif ~isnan(backup_pendant) && pendants(backup_pendant)
+    %         v = backup_pendant;
+    %     else
+    %         v = find(pendants,1);
+    %     end
+    
+    if ~no_pendants
         u = neighbors{v}; % there is only one
     else
-        if phase ==1
+        if phase == 1
             phase = 2;
-            core = removed_vxs;
+            core = ~removed_vxs;
         end
         v = find(~removed_vxs,1);
         u = neighbors{v}(randi(length(neighbors{v}),1));
@@ -75,7 +113,27 @@ while ~all(removed_vxs) % the graph still has some vxs.
                     queue = [queue,w];
                 elseif length(neighbors{w}) == 1;
                     pendants(w) = true;
-                    shortcut_pendant = w;
+                    
+                    
+                    % this gives runs thru our pendant list until there's
+                    % an empty slot, at which point we replace. not sure
+                    % what optimal K is.
+                    for k = 1:K
+                        if isnan(shortcut_pendants(k)) || ...
+                                ~pendants(shortcut_pendants(k))
+                            if k == K
+                                dispstat('full','keepthis')
+                            end
+                            shortcut_pendants(k) = w;
+                            break
+                        end
+                    end
+                    
+                    %                     if isnan(shortcut_pendant) || ~pendants(shortcut_pendant)
+                    %                         shortcut_pendant = w;
+                    %                     elseif isnan(backup_pendant) || ~pendants(backup_pendant)
+                    %                         backup_pendant = w;
+                    %                     end
                 end
             end
         end
