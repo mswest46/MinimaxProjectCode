@@ -16,12 +16,12 @@ for i = 1: num_nodes
     neighbors{i} = find(adjacency_matrix(:,i));
     neighbors{i}(neighbors{i}==i) = [];
 end
-nodes = cell(1,num_nodes);
-for i = 1: num_nodes
-    nodes{i} = struct('index',i,'right_parent',nan,'asdf',nan,...
-        'ownership',0);
-end
-graph.nodes = nodes;
+% nodes = cell(1,num_nodes);
+% for i = 1: num_nodes
+%     nodes{i} = struct('index',i,'right_parent',nan,'asdf',nan,...
+%         'ownership',0);
+% end
+% graph.nodes = nodes;
 graph.neighbors = neighbors;
 graph.get_vs_from_e = @ get_vertices_from_edge;
 graph.get_e_from_vs = @ get_edge_from_vertices;
