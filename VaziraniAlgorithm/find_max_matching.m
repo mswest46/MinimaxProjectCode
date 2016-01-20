@@ -1,4 +1,4 @@
-function [pair] = find_max_matching(adjacency_matrix, pair)
+function [pair, core] = find_max_matching(adjacency_matrix, pair)
 
 % input the adjacency matrix of graph, output a maximal matching vector on
 % that graph.
@@ -12,14 +12,10 @@ num_nodes = graph.num_nodes;
 
 
 if nargin<2
-    dispstat('greedy algorithm doing work');pause(.3);
-    pair = greedy_algorithm(adjacency_matrix); % initially all free
+    [pair, core] = greedy_algorithm(adjacency_matrix); % initially all free
     matching_size = sum(pair<dummy);
-    dispstat(['greedy algorithm matched ', num2str(100*matching_size/num_nodes),...
-        '% of nodes'], 'keepthis'); 
-    
 else
-    disp('pair inputted');
+    dispstat('pair inputted');
     matching_size = sum(pair<dummy);
 end
 
@@ -67,7 +63,9 @@ while true
         dispstat('searched');
         
         if search_mods.max_matching_found
-            disp(['max matching found in ', num2str(phase_no), ' phases']);
+            disp(['max matching found in ', num2str(phase_no), ' phases',...
+                ' with ', num2str(100*matching_size/num_nodes),...
+                '% of nodes matched']);
             return
         end
         
