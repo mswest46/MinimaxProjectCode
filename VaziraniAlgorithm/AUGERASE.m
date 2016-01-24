@@ -43,8 +43,12 @@ left_path = FINDPATH(init_left,final_left, nan, find_path_struct);
 right_path = FINDPATH(init_right,final_right, nan, find_path_struct);
 aug_path = [flip(right_path),left_path];
 
+check_path_is_along_edges(graph,path);
+
 % augment matching in pair.
 pair = AUGMENT(aug_path,pair);
+
+check_pair_is_matching(graph.adjacency_matrix,pair);
 
 % pack erase_struct. 
 erase_struct.erased = erased;

@@ -1,4 +1,4 @@
-function [pair, core] = find_max_matching(adjacency_matrix, pair)
+function pair = vazirani_matching(adjacency_matrix, pair)
 
 % input the adjacency matrix of graph, output a maximal matching vector on
 % that graph.
@@ -9,17 +9,15 @@ dispstat('','init'); % for progress updating.
 graph = create_graph_struct_from_adjacency_matrix(adjacency_matrix);
 dummy = graph.dummy;
 num_nodes = graph.num_nodes;
-
+max_matching_found = false;
 
 if nargin<2
-    [pair, core] = greedy_algorithm(adjacency_matrix); % initially all free
-    matching_size = sum(pair<dummy);
-else
-    dispstat('pair inputted');
-    matching_size = sum(pair<dummy);
+    pair = dummy * ones(1,num_nodes);
 end
 
-while true
+matching_size = sum(pair<dummy);
+
+while true;
     augmentation_occurred = false;
     erased = false(1,num_nodes);
     

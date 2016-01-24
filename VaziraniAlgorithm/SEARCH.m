@@ -7,6 +7,10 @@ search_mods = search_struct.search_mods;
 bloom = search_struct.bloom;
 erased = search_struct.erased;
 
+if 1
+    1;
+end
+
 % unpack search_mods.
 assert(length(fieldnames(search_mods)) == 11);
 search_level = search_mods.search_level;
