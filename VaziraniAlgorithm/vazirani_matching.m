@@ -45,9 +45,10 @@ while true;
     phase_no = phase_no + 1;
     dispstat(['phase number ', num2str(phase_no)]);
     pause(1);
-    
+    search_phase_no = 0;
     while ~augmentation_occurred
         
+        search_phase_no = search_phase_no + 1;
         % pack search_struct
         search_struct.graph = graph;
         search_struct.search_mods = search_mods;
@@ -57,6 +58,13 @@ while true;
         
         % run SEARCH
         dispstat('searching');
+%         flag = false;
+%         if search_phase_no == 2
+%             [aug_path_exists,aug_path] = check_for_aug_path(graph.adjacency_matrix,pair);
+%             level = min(search_mods.even_level,search_mods.odd_level);
+%             search_level = search_mods.search_level;
+%             flag = true;
+%         end
         search_mods = SEARCH(search_struct);
         dispstat('searched');
         

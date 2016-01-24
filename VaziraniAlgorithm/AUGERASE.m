@@ -42,13 +42,13 @@ find_path_struct.predecessors = predecessors;
 left_path = FINDPATH(init_left,final_left, nan, find_path_struct); 
 right_path = FINDPATH(init_right,final_right, nan, find_path_struct);
 aug_path = [flip(right_path),left_path];
-
-check_path_is_along_edges(graph,path);
+% 
+% check_path_is_along_edges(graph,path);
 
 % augment matching in pair.
-pair = AUGMENT(aug_path,pair);
+pair = AUGMENT(graph,aug_path,pair);
 
-check_pair_is_matching(graph.adjacency_matrix,pair);
+% check_pair_is_matching(graph.adjacency_matrix,pair);
 
 % pack erase_struct. 
 erase_struct.erased = erased;
@@ -61,11 +61,14 @@ erase_struct.successors = successors;
 end
 
 % TODO speed this up. 
-function pair = AUGMENT(aug_path,pair)
+function pair = AUGMENT(G,aug_path,pair)
 for k = 1: length(aug_path) - 1
     if mod(k,2) % i is odd
         pair(aug_path(k)) = aug_path(k+1);
         pair(aug_path(k+1)) = aug_path(k);
+%         if isempty(G.get_e_from_vs(aug_path(k),aug_path(k+1)))
+%             1;
+%         end
     end
 end
 end

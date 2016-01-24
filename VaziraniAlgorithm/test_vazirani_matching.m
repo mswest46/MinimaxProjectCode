@@ -10,7 +10,7 @@ pair = [13,3,2,6,7,4,5,13,10,9,12,11];
 
 
 
-pair = find_max_matching(adjacency_matrix, pair);
+pair = vazirani_matching(adjacency_matrix, pair);
 assert(isequal(pair, [2,1,4,3,12,7,6,9,8,11,10,5]));
 
 
@@ -24,7 +24,7 @@ adjacency_matrix = temp.adjacency_matrix;
 pair = [3,8,1,5,4,7,6,2,11,11];
 
 
-pair = find_max_matching(adjacency_matrix, pair);
+pair = vazirani_matching(adjacency_matrix, pair);
 
 
 
@@ -35,7 +35,7 @@ clear
 temp = load('~/Code/MinimaxProjectCode/testing_matrices/mat2.mat','adjacency_matrix');
 adjacency_matrix = temp.adjacency_matrix;
 
-pair = find_max_matching(adjacency_matrix);
+pair = vazirani_matching(adjacency_matrix);
 
 
 %%
@@ -44,7 +44,7 @@ clear
 temp = load('~/Code/MinimaxProjectCode/testing_matrices/mat3.mat','adjacency_matrix');
 adjacency_matrix = temp.adjacency_matrix;
 
-pair = find_max_matching(adjacency_matrix);
+pair = vazirani_matching(adjacency_matrix);
 
 %% test with bipartite graphs
 clear
@@ -56,7 +56,7 @@ num_nodes = 1000;
 for i = 1:4
     adjacency_matrix = create_bipartite_configuration_model(num_nodes,distribution);
     pair1 = hopcroft_karp(adjacency_matrix);
-    pair2 = find_max_matching(adjacency_matrix);
+    pair2 = vazirani_matching(adjacency_matrix);
     hop_matching_size = sum(pair1<length(pair1)+1);
     mv_matching_size = sum(pair2<length(pair2)+1);
     assert(isequal(hop_matching_size, mv_matching_size));
@@ -86,7 +86,7 @@ for i = 1:10
     distribution.params = size_bias(params);
     
     adjacency_matrix = create_configuration_model(num_nodes,distribution);
-    pair = find_max_matching(adjacency_matrix);
+    pair = vazirani_matching(adjacency_matrix);
     matching_size = sum(pair<length(pair)+1);
     matching = true;
     
@@ -118,7 +118,7 @@ distribution.params = size_bias(params);
 num_nodes = 1000;
 
 adjacency_matrix = create_configuration_model(num_nodes,distribution);
-pair = find_max_matching(adjacency_matrix);
+pair = vazirani_matching(adjacency_matrix);
 
 bool = check_for_aug_path(adjacency_matrix,pair);
 assert(~bool);

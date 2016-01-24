@@ -7,10 +7,6 @@ search_mods = search_struct.search_mods;
 bloom = search_struct.bloom;
 erased = search_struct.erased;
 
-if 1
-    1;
-end
-
 % unpack search_mods.
 assert(length(fieldnames(search_mods)) == 11);
 search_level = search_mods.search_level;
@@ -35,18 +31,27 @@ end
 
 bridges2 = cell(1,num_nodes);
 bridge_pos = zeros(1,num_nodes);
+z = zeros(1,100);
+bridge_level_modified = false(1,num_nodes);
 for i = 1: num_nodes
-    bridges2{i} = zeros(1,100);
-    bridges2{i}(1:length(bridges{i})) = bridges{i};
+    bridges2{i} = z;
+    if ~isempty(bridges{i})
+       bridge_level_modified(i) = true;
+       bridges2{i}(1:length(bridges{i})) = bridges{i};
+    end
     bridge_pos(i) = length(bridges{i}); % where the last bridge is.
 end
 
 candidates2 = cell(1,num_nodes);
 cand_pos = zeros(1,num_nodes);
 cand_added = false(1,num_nodes);
+cand_level_modified = false(1,num_nodes);
 for i = 1: num_nodes
-    candidates2{i} = zeros(1,100);
-    candidates2{i}(1:length(candidates{i})) = candidates{i};
+    candidates2{i} = z;
+    if ~isempty(candidates{i})
+        cand_level_modified(i) = true;
+        candidates2{i}(1:length(candidates{i})) = candidates{i};
+    end
     cand_pos(i) = length(candidates{i}); % where the last candidate is.
 end
 
@@ -77,13 +82,17 @@ while initial_flag || ...
             end
             targets(targets==pair(v)) = [];
             for u = targets
-                if even_level(u) < inf
+                if even_level(u) < inf                
                     j = (even_level(u) +...
                         even_level(v)) / 2;
                     b = graph.get_e_from_vs(u,v);
                     bridge_pos(index(j)) = bridge_pos(index(j)) + 1;
                     bridges2{index(j)}(bridge_pos(index(j))) = b;
-                    bridge_found = true;
+                    bridge_level_modified(index(j)) = true;
+                    if search_level ==j
+                        bridge_found = true;
+                    end
+                 
                 else
                     if odd_level(u) == inf
                         odd_level(u) = search_level+1;
@@ -100,6 +109,7 @@ while initial_flag || ...
                             cand_pos(index(search_level + 1)) = cand_pos(index(search_level+1)) + 1;
                             candidates2{index(search_level+1)}(cand_pos(index(search_level+1))) = u;
                             cand_added(u) = true;
+                            cand_level_modified(index(search_level+1)) = true;
                         end
                     end
                     if odd_level(u) < search_level
@@ -118,6 +128,7 @@ while initial_flag || ...
                     bridge_pos(index(j)) = bridge_pos(index(j)) + 1;
                     bridges2{index(j)}(bridge_pos(index(j))) = b;
                     bridge_found = true;
+                    bridge_level_modified(index(j)) = true;
                 elseif even_level(u) == inf
                     predecessors{u} = v;
                     successors{v} = u;
@@ -127,6 +138,7 @@ while initial_flag || ...
                         cand_pos(index(search_level + 1)) = cand_pos(index(search_level+1)) + 1;
                         candidates2{index(search_level+1)}(cand_pos(index(search_level+1))) = u;
                         cand_added(u) = true;
+                        cand_level_modified(index(search_level + 1)) = true;
                     end
                 end
                 
@@ -146,6 +158,9 @@ bridges2{index(search_level)} = ...
     unique(bridges2{index(search_level)});
 
 for i = 1: num_nodes
+    if ~bridge_level_modified(i)
+        bridges2{i} = [];
+    end
     if~isempty(bridges2{i})
         bridges2{i}(bridges2{i}==0) = [];
     end
@@ -154,6 +169,9 @@ end
 bridges = bridges2;
 
 for i = 1: num_nodes
+    if ~cand_level_modified(i)
+        candidates2{i} = [];
+    end
     if~isempty(candidates2{i})
         candidates2{i}(candidates2{i}==0) = [];
     end
@@ -163,6 +181,7 @@ candidates = candidates2;
 
 % TODO make some indicator variables to improve this.
 if isempty(bridges{index(search_level)})
+
     max_matching_found = true;
 end
 
