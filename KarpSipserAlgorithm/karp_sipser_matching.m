@@ -83,7 +83,7 @@ while ~all(removed_vxs) % the graph still has some vxs.
             core = ~removed_vxs;
         end
         v = find(~removed_vxs,1);
-        u = neighbors{v}(randi(length(neighbors{v}),1));
+        u = neighbors{v}(1);
     end
     
     pair(u) = v; pair(v) = u; % pair these
