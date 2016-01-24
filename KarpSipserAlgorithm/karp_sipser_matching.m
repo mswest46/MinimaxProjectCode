@@ -1,7 +1,11 @@
-function [pair,core] = greedy_algorithm(adjacency_matrix)
+function [pair,core] = karp_sipser_matching(adjacency_matrix)
+
+% the karp-sipser algorithm for finding large matchings in a graph G.
+% returned is a pair vector representing the matching and core, which is
+% the set of unmatched vertices left once the algorithm starts making
+% potentially 'incorrect' decisions. 
 
 G = create_graph_struct_from_adjacency_matrix(adjacency_matrix);
-
 
 % graph has been constructed from create_graph_struct.
 
@@ -14,6 +18,7 @@ neighbors = G.neighbors;
 phase = 1;
 matching_size = 0;
 dispstat('','init');
+core = false(1,num_nodes);
 % shortcut_pendant = nan;
 % backup_pendant = nan;
 

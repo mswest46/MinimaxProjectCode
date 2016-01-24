@@ -9,7 +9,7 @@ adjacency_matrix = create_configuration_model(num_nodes,distribution);
 
 %%
 dummy = num_nodes+1;
-pair = greedy_algorithm(adjacency_matrix);
+pair = karp_sipser_matching(adjacency_matrix);
 matching = true;
 for j = 1: num_nodes
     if length(find(pair==j,2))>1 % double matched a vertex
