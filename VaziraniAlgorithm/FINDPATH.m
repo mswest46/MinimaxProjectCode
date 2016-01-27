@@ -44,7 +44,14 @@ else
 end
 
 vx = v_start;
+history = [];
 while vx ~= low
+    if vx == 377734
+        1;
+        my_tree_plot(parent);
+    end
+     
+    history = [history,vx];
     
     % suitable predecessors: we only want to travel along a single
     % left/right designation in one call of findpath. in this case, say we
@@ -66,7 +73,8 @@ while vx ~= low
         % v_start because if high is in a bloom, we will emerge at that
         % bloom's base regardless of the ownership of high
         b = base(bloom(vx));
-        if ownership(b) == ownership(v_start) && ~visited_vertices(b)
+        b_star = base_star(bloom(vx),bloom,base);
+        if ownership(b_star) == ownership(v_start) && ~visited_vertices(b)
             parent(b) = vx;
             vx = b;
             visited_vertices(b) = true;
@@ -135,6 +143,12 @@ path = new_path;
 
 end
 
+function b = base_star(B, bloom, base)
+b = base(B);
+while ~isnan(bloom(b))
+    b = base(bloom(b));
+end
+end
 
 % while ux ~= low
 %     tempv = [tempv,vx];
