@@ -7,6 +7,9 @@ col_subs = [2,1,3,2,4,5,3,6,3,7,12,4,7,6,5,9,8,10,9 ,11,10,12,11,5 ];
 adjacency_matrix(sub2ind(size(adjacency_matrix), row_subs, col_subs)) = 1;
 
 pair = [13,3,2,6,7,4,5,13,10,9,12,11];
+level = [0,1,2,3,3,4,4,0,1,2,3,4];
+close all
+plot_matching(adjacency_matrix,level,pair,'');
 
 
 
@@ -17,34 +20,34 @@ assert(isequal(pair, [2,1,4,3,12,7,6,9,8,11,10,5]));
 
 
 %% search finds blossoms but not augmentation, quits.
-clear
-
-temp = load('~/Code/MinimaxProjectCode/testing_matrices/mat1.mat','adjacency_matrix');
-adjacency_matrix = temp.adjacency_matrix;
-pair = [3,8,1,5,4,7,6,2,11,11];
-
-
-pair = vazirani_matching(adjacency_matrix, pair);
-
-
-
-%%
-
-clear
-
-temp = load('~/Code/MinimaxProjectCode/testing_matrices/mat2.mat','adjacency_matrix');
-adjacency_matrix = temp.adjacency_matrix;
-
-pair = vazirani_matching(adjacency_matrix);
-
-
-%%
-clear
-
-temp = load('~/Code/MinimaxProjectCode/testing_matrices/mat3.mat','adjacency_matrix');
-adjacency_matrix = temp.adjacency_matrix;
-
-pair = vazirani_matching(adjacency_matrix);
+% clear
+% 
+% temp = load('~/Code/MinimaxProjectCode/testing_matrices/mat1.mat','adjacency_matrix');
+% adjacency_matrix = temp.adjacency_matrix;
+% pair = [3,8,1,5,4,7,6,2,11,11];
+% 
+% 
+% pair = vazirani_matching(adjacency_matrix, pair);
+% 
+% 
+% 
+% %%
+% 
+% clear
+% 
+% temp = load('~/Code/MinimaxProjectCode/testing_matrices/mat2.mat','adjacency_matrix');
+% adjacency_matrix = temp.adjacency_matrix;
+% 
+% pair = vazirani_matching(adjacency_matrix);
+% 
+% 
+% %%
+% clear
+% 
+% temp = load('~/Code/MinimaxProjectCode/testing_matrices/mat3.mat','adjacency_matrix');
+% adjacency_matrix = temp.adjacency_matrix;
+% 
+% pair = vazirani_matching(adjacency_matrix);
 
 %% test with bipartite graphs
 clear
