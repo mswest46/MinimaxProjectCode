@@ -27,8 +27,8 @@ if initial_flag % first run we need to put free vxs in level 0 candidates.
     candidates{index(0)} = find(pair==graph.dummy);
     even_level(pair == graph.dummy) = 0;
 end
-
 cand_added = false(1,num_nodes);
+search_happened = false;
 
 % this is a weird edge case. If we have searched through bridges and found
 % only blossoms, we're going to call SEARCH again without resetting. If
@@ -37,10 +37,9 @@ cand_added = false(1,num_nodes);
 % we need to increment search level outside of the loop.  TODO make this
 % more intuitive and clean.
 
-search_happened = false;
-
+bridge_found = false;
 while initial_flag || ...
-        (isempty(bridges{index(search_level)}) && ~isempty(candidates{index(search_level)}))
+        (~bridge_found && ~isempty(candidates{index(search_level)}))
     
     search_happened = true;
     initial_flag = false;
@@ -65,6 +64,9 @@ while initial_flag || ...
                         even_level(v)) / 2;
                     b = graph.get_e_from_vs(u,v);
                     bridges{index(j)} = [bridges{index(j)},b];
+                    if j == search_level
+                        bridge_found = true;
+                    end
                 else
                     if odd_level(u) == inf
                         odd_level(u) = search_level+1;
@@ -81,7 +83,7 @@ while initial_flag || ...
                             cand_added(u) = true;
                             cand_pos = cand_pos+1;
                             if cand_pos > length(C)
-                                z = zeros(10*length(C));
+                                z = zeros(1,10*length(C));
                                 z(1:length(C)) = C;
                                 C = z;
                             end
@@ -102,6 +104,9 @@ while initial_flag || ...
                     j = (odd_level(u) + odd_level(v)) / 2;
                     b = graph.get_e_from_vs(u,v);
                     bridges{index(j)} = [bridges{index(j)},b];
+                    if j == search_level;
+                        bridge_found = true;
+                    end
                 elseif even_level(u) == inf
                     predecessors{u} = v;
                     successors{v} = u;
@@ -111,7 +116,7 @@ while initial_flag || ...
                         cand_added(u) = true;
                         cand_pos = cand_pos+1;
                         if cand_pos > length(C)
-                            z = zeros(10*length(C));
+                            z = zeros(1,10*length(C));
                             z(1:length(C)) = C;
                             C = z;
                         end
@@ -122,9 +127,7 @@ while initial_flag || ...
             end
         end
     end
-    if cand_pos>1000
-        dispstat(['we gonna need a biga boat',num2str(cand_pos)],'keepthis');
-    end
+
     candidates{index(search_level+1)} = C(1:cand_pos);
     
 end
@@ -138,9 +141,26 @@ bridges{index(search_level)} = unique(bridges{index(search_level)});
 
 % TODO make some indicator variables to improve this.
 
-if isempty(bridges{index(search_level)})   
+if isempty(bridges{index(search_level)})
     max_matching_found = true;
 end
+
+%%
+
+% while ~augmentation_occured in level i-1 and candidates level i nonempty
+% perform the search as done above, then for each bridge in bridges{i},
+% classify the bridge and augment/ignore/bloom. 
+
+
+
+
+
+
+
+%%
+
+
+
 
 % repack search_mods.
 search_mods.search_level = search_level;

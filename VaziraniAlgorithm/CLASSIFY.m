@@ -1,7 +1,7 @@
 function [ddfs_mods] = ...
     CLASSIFY(classify_struct)
 
-% unpack classify_struct. 
+% unpack classify_struct.
 graph = classify_struct.graph;
 bridge = classify_struct.bridge;
 predecessors = classify_struct.predecessors;
@@ -11,14 +11,15 @@ bloom = classify_struct.bloom;
 base = classify_struct.base;
 ownership = classify_struct.ownership;
 
-input_ownership = ownership; % for determining visitation later. 
+
+input_ownership = ownership; % for determining visitation later.
 num_nodes = graph.num_nodes;
 num_edges = graph.num_edges;
 
 
 % initialize part 1
 [init_left, init_right] = graph.get_vs_from_e(bridge);
-% left_parent = zeros(1,num_nodes); 
+% left_parent = zeros(1,num_nodes);
 % right_parent = zeros(1,num_nodes);
 bloom_discovered = false;
 used_edges = false(1,num_edges);
@@ -30,7 +31,7 @@ right_parent = zeros(1,num_ancs);
 index_of_ancestors = zeros(1,num_nodes);
 index_of_ancestors(ancestors) = 1:num_ancs;
 
-% in case of early return, pack ddfs_mods. TODO eliminate some of these. 
+% in case of early return, pack ddfs_mods. TODO eliminate some of these.
 ddfs_mods.bloss_or_aug = '';
 ddfs_mods.marked_vertices = false(1,num_nodes);
 ddfs_mods.ownership = ownership;
@@ -67,8 +68,8 @@ else
     right_COA = init_right;
 end
 
-% the base of init_right and init_left blooms is the same. 
-if right_COA == left_COA 
+% the base of init_right and init_left blooms is the same.
+if right_COA == left_COA
     return
 end
 
@@ -79,25 +80,24 @@ DCV = nan;
 barrier = right_COA;
 
 % condition for stopping: if we've discovered a bloom or we've reached two
-% different free vertices. 
+% different free vertices.
 stop_when = bloom_discovered || ...
     (level(left_COA)==0 && level(right_COA) == 0 && left_COA~=right_COA);
 
 
 % run DDFS
-while ~stop_when 
-    
+while ~stop_when
+1;
     if level(left_COA) >= level(right_COA)
         LEFT_DFS;
     else
         RIGHT_DFS;
     end
     
-% reset the condition
-stop_when = bloom_discovered || ...
-    (level(left_COA)==0 && level(right_COA) == 0 && left_COA~=right_COA);
+    % reset the condition
+    stop_when = bloom_discovered || ...
+        (level(left_COA)==0 && level(right_COA) == 0 && left_COA~=right_COA);
 end
-
 if bloom_discovered
     ddfs_mods.bloss_or_aug = 'blossom';
     ownership(DCV) = 0;
@@ -107,7 +107,7 @@ end
 
 marked_vertices = (ownership > 0 & input_ownership == 0); % newly marked
 
-% pack ddfs_mods. 
+% pack ddfs_mods.
 ddfs_mods.ownership = ownership;
 ddfs_mods.marked_vertices = marked_vertices;
 ddfs_mods.left_parent = left_parent;
@@ -127,7 +127,7 @@ ddfs_mods.init_right = init_right;
             ownership(left_COA) = 1;
         else
             preds = get_unused_unerased_predecessors_of(left_COA,predecessors);
-            if isempty(preds) 
+            if isempty(preds)
                 if left_COA == init_left
                     bloom_discovered = true;
                 else
@@ -167,17 +167,20 @@ ddfs_mods.init_right = init_right;
             end
         elseif right_COA==init_right && ~isnan(bloom(init_right)); % edge case
             % we have backtracked to barrier, return to DCV and update
-                barrier = DCV;
-                right_COA = DCV; % reclaim DCV
-                ownership(right_COA) = 2;
-                left_COA = left_parent(index_of_ancestors(left_COA));
+            barrier = DCV;
+            right_COA = DCV; % reclaim DCV
+            ownership(right_COA) = 2;
+            left_COA = left_parent(index_of_ancestors(left_COA));
         else
             u = preds(1);
             edge_for_marking = graph.get_e_from_vs(right_COA, u);
             if ~isnan(bloom(u))
                 % TODO time
+                if u == 377734
+                    1;
+                end
                 u = base_star(bloom(u), bloom, base); % move to base.
-                % 
+                %
             end
             if ~ownership(u) || u == left_COA
                 used_edges(edge_for_marking) = true;
@@ -203,7 +206,7 @@ ddfs_mods.init_right = init_right;
 end
 
 
-% TODO improve this using the algorithm mentioned in thingy. 
+% TODO improve this using the algorithm mentioned in thingy.
 function b = base_star(B, bloom, base)
 b = base(B);
 while ~isnan(bloom(b))
