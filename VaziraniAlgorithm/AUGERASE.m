@@ -30,6 +30,7 @@ end
 % packing find_path_struct.
 find_path_struct.graph = graph;
 find_path_struct.erased = erased;
+find_path_struct.pair = pair;
 find_path_struct.level = level;
 find_path_struct.ownership = ownership;
 find_path_struct.bloom = bloom;
