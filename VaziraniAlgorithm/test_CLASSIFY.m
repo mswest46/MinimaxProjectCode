@@ -104,10 +104,6 @@ assert(strcmp(bloss_or_aug, 'augment'))
 test_own = zeros(1,num_nodes); test_own([13,11,5,3,1]) = 1; ...
     test_own([14,12,6,4,2]) = 2; test_own([7,9]) = 1; test_own([8,10]) = 2;
 assert(isequal(ownership, test_own));
-test_lp = zeros(1,num_nodes); test_lp([1,3,5,11]) = [3,5,11,13];
-test_rp = zeros(1,num_nodes); test_rp([2,4,6,12]) = [4,6,12,14];
-assert(isequaln(left_parent, test_lp));
-assert(isequaln(right_parent, test_rp));
 assert(isequaln(bottleneck, nan));
 assert(isequal(final_left,1));
 assert(isequal(final_right,2));
