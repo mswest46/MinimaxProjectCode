@@ -2,7 +2,7 @@ function [erased, pair, pred_count] = ...
     AUGERASE(aug_erase_struct)
 
 % unpack aug_erase_struct. TODO clean this up. 
-assert(length(fieldnames(aug_erase_struct))==16);
+assert(length(fieldnames(aug_erase_struct))==17);
 graph = aug_erase_struct.graph;
 pair = aug_erase_struct.pair;
 erased = aug_erase_struct.erased;
@@ -12,7 +12,8 @@ init_left = aug_erase_struct.init_left;
 init_right = aug_erase_struct.init_right;
 final_left = aug_erase_struct.final_left;
 final_right = aug_erase_struct.final_right;
-level = aug_erase_struct.level;
+even_level = aug_erase_struct.even_level;
+odd_level = aug_erase_struct.odd_level;
 ownership = aug_erase_struct.ownership;
 bloom = aug_erase_struct.bloom;
 base = aug_erase_struct.base;
@@ -31,7 +32,8 @@ end
 find_path_struct.graph = graph;
 find_path_struct.erased = erased;
 % find_path_struct.pair = pair;
-find_path_struct.level = level;
+find_path_struct.even_level = even_level;
+find_path_struct.odd_level = odd_level;
 find_path_struct.ownership = ownership;
 find_path_struct.bloom = bloom;
 find_path_struct.base = base;

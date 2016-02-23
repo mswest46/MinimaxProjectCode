@@ -7,7 +7,7 @@ num_nodes =  10;
 adjacency_matrix = zeros(num_nodes);
 adjacency_matrix(sub2ind(size(adjacency_matrix),row_subs,col_subs)) = 1;
 graph = create_graph_struct_from_adjacency_matrix(adjacency_matrix);
-assert(length(fieldnames(graph)) == 9);
+assert(length(fieldnames(graph)) == 8);
 assert(graph.num_nodes == 10);
 assert(graph.num_edges == 4);
 assert(isequal(graph.edge_indices, [11;55;73;76]));

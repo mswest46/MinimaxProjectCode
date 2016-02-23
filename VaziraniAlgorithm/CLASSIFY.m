@@ -5,7 +5,8 @@ function [ddfs_mods] = ...
 graph = classify_struct.graph;
 bridge = classify_struct.bridge;
 predecessors = classify_struct.predecessors;
-level = classify_struct.level;
+even_level = classify_struct.even_level;
+odd_level = classify_struct.odd_level;
 erased = classify_struct.erased;
 bloom = classify_struct.bloom;
 base = classify_struct.base;
@@ -15,6 +16,7 @@ ownership = classify_struct.ownership;
 input_ownership = ownership; % for determining visitation later.
 num_nodes = graph.num_nodes;
 num_edges = graph.num_edges;
+level = @ (v) min(even_level(v),odd_level(v));
 
 
 % initialize part 1

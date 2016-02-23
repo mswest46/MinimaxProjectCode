@@ -15,14 +15,15 @@ if high == low
 end
 
 % unpacking find_path_struct.
-assert(length(fieldnames(find_path_struct))==9);
+assert(length(fieldnames(find_path_struct))==10);
 graph = find_path_struct.graph;
 erased = find_path_struct.erased;
 ownership = find_path_struct.ownership;
 bloom = find_path_struct.bloom;
 base = find_path_struct.base;
 % also in here but not used until open are:
-% level
+% even_level
+% odd_level
 % left_peak
 % right_peak
 predecessors = find_path_struct.predecessors;

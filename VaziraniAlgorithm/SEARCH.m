@@ -1,52 +1,39 @@
-function search_mods = SEARCH(search_struct)
+function [augmentation_occurred,pair] = SEARCH(graph,pair)
 
-% unpack search_struct
-graph = search_struct.graph;
-pair = search_struct.pair;
-search_mods = search_struct.search_mods;
-bloom = search_struct.bloom;
-erased = search_struct.erased;
+dispstat('','init');
 
-% unpack search_mods.
-assert(length(fieldnames(search_mods)) == 11);
-search_level = search_mods.search_level;
-even_level = search_mods.even_level;
-odd_level = search_mods.odd_level;
-predecessors = search_mods.predecessors;
-successors = search_mods.successors;
-pred_count = search_mods.pred_count;
-bridges = search_mods.bridges;
-anomalies = search_mods.anomalies;
-candidates = search_mods.candidates;
-initial_flag = search_mods.initial_flag;
-max_matching_found = search_mods.max_matching_found;
-
-% initialize
 num_nodes = graph.num_nodes;
-if initial_flag % first run we need to put free vxs in level 0 candidates.
-    candidates{index(0)} = find(pair==graph.dummy);
-    even_level(pair == graph.dummy) = 0;
-end
-cand_added = false(1,num_nodes);
-search_happened = false;
+dummy = graph.dummy;
 
-% this is a weird edge case. If we have searched through bridges and found
-% only blossoms, we're going to call SEARCH again without resetting. If
-% there are no candidates in the next level however, we should have found a
-% max matching. Thus, if ~search_happened, we want to be done. To do this
-% we need to increment search level outside of the loop.  TODO make this
-% more intuitive and clean.
+search_level = 0;
+even_level = inf(1,num_nodes);
+odd_level = inf(1,num_nodes);
+predecessors = cell(1,num_nodes);
+successors = cell(1,num_nodes);
+pred_count = zeros(1,num_nodes);
+bridges = cell(1,num_nodes);
+anomalies = cell(1,num_nodes);
+candidates = cell(1,num_nodes);
+augmentation_occurred = false;
+erased = false(1,num_nodes);
+bloom = nan(1,num_nodes);
+bloom_number = 0; % the highest index of the blooms already existing.
+base = []; % the base of the existing blooms
+left_peak = []; % the left peak of the existing blooms.
+right_peak = []; % the right peak of the existing blooms.
+ownership = zeros(1,num_nodes); % 1 means left, 2 means right, 0 means unowned.
 
-bridge_found = false;
-while initial_flag || ...
-        (~bridge_found && ~isempty(candidates{index(search_level)}))
-    
-    search_happened = true;
-    initial_flag = false;
-    search_level = search_level + 1;
+candidates{index(0)} = find(pair==graph.dummy);
+even_level(pair == graph.dummy) = 0;
+
+
+% continue until augmentation occurs or candidates level i is empty
+while ~augmentation_occurred && ~isempty(candidates{index(search_level)})
     cands2search = candidates{index(search_level)};
     cand_pos = length(candidates{index(search_level+1)});
-    C = zeros(1,100);
+    bridge_pos = zeros(1,num_nodes);
+    bridges_modified = false(1,num_nodes);
+    C = zeros(1,max(100,cand_pos));
     C(1:cand_pos) = candidates{index(search_level+1)};
     if mod(search_level,2)==0 %search_level is even.
         for v = cands2search
@@ -63,10 +50,22 @@ while initial_flag || ...
                     j = (even_level(u) +...
                         even_level(v)) / 2;
                     b = graph.get_e_from_vs(u,v);
-                    bridges{index(j)} = [bridges{index(j)},b];
-                    if j == search_level
-                        bridge_found = true;
+                    %                     bridges{index(j)} = [bridges{index(j)},b];
+                    l = length(bridges{index(j)});
+                    if ~bridges_modified(index(j))
+                        z = zeros(1,1000);
+                        z(1:l) = bridges{index(j)};
+                        bridges{index(j)} = z;
+                        bridge_pos(index(j)) = l;
+                        bridges_modified(index(j)) = true;
+                    elseif bridge_pos(index(j)) == l
+                        z = zeros(1,10*l);
+                        z(1:l) = bridges{index(j)};
+                        bridges{index(j)} = z;
                     end
+                    bridge_pos(index(j)) = bridge_pos(index(j))+1;
+                    bridges{index(j)}(bridge_pos(index(j))) = b;
+                    
                 else
                     if odd_level(u) == inf
                         odd_level(u) = search_level+1;
@@ -79,19 +78,25 @@ while initial_flag || ...
                             [predecessors{u}, v];
                         successors{v} = ...
                             [successors{v}, u];
-                        if ~cand_added(u)
-                            cand_added(u) = true;
-                            cand_pos = cand_pos+1;
-                            if cand_pos > length(C)
-                                z = zeros(1,10*length(C));
-                                z(1:length(C)) = C;
-                                C = z;
-                            end
-                            C(cand_pos) = u;
+                        cand_pos = cand_pos+1;
+                        if cand_pos > length(C)
+                            z = zeros(1,10*length(C));
+                            z(1:length(C)) = C;
+                            C = z;
                         end
+                        C(cand_pos) = u;
                     end
                     if odd_level(u) < search_level
                         anomalies{u} = [anomalies{u}, v];
+                        
+                        % this could cause bugs.
+                        cand_pos = cand_pos+1;
+                        if cand_pos > length(C)
+                            z = zeros(1,10*length(C));
+                            z(1:length(C)) = C;
+                            C = z;
+                        end
+                        C(cand_pos) = u;
                     end
                 end
             end
@@ -104,81 +109,118 @@ while initial_flag || ...
                     j = (odd_level(u) + odd_level(v)) / 2;
                     b = graph.get_e_from_vs(u,v);
                     bridges{index(j)} = [bridges{index(j)},b];
-                    if j == search_level;
-                        bridge_found = true;
-                    end
                 elseif even_level(u) == inf
                     predecessors{u} = v;
                     successors{v} = u;
                     pred_count(u) = 1;
                     even_level(u) = search_level + 1;
-                    if ~cand_added(u)
-                        cand_added(u) = true;
-                        cand_pos = cand_pos+1;
-                        if cand_pos > length(C)
-                            z = zeros(1,10*length(C));
-                            z(1:length(C)) = C;
-                            C = z;
-                        end
-                        C(cand_pos) = u;
+                    cand_pos = cand_pos+1;
+                    if cand_pos > length(C)
+                        z = zeros(1,10*length(C));
+                        z(1:length(C)) = C;
+                        C = z;
                     end
+                    C(cand_pos) = u;
                 end
-                
             end
         end
     end
-
-    candidates{index(search_level+1)} = C(1:cand_pos);
+    
+    mod_bridge_indices = find(bridges_modified); % note that these are already +1ed
+    for i = 1:length(mod_bridge_indices)
+        ind = mod_bridge_indices(i);
+        bridges{ind} = bridges{ind}(1:bridge_pos(ind));
+    end
+    candidates{index(search_level+1)} = unique(C(1:cand_pos));
+    bridge_list = unique(bridges{index(search_level)});
+    
+    for i = 1: length(bridge_list)
+        bridge = bridge_list(i);
+        
+        % pack classify struct.
+        
+        classify_struct.graph = graph;
+        classify_struct.bridge = bridge;
+        classify_struct.predecessors = predecessors;
+        classify_struct.even_level = even_level;
+        classify_struct.odd_level = odd_level;
+        classify_struct.erased = erased;
+        classify_struct.bloom = bloom;
+        classify_struct.base = base;
+        classify_struct.ownership = ownership;
+        % run CLASSIFY
+        ddfs_mods = CLASSIFY(classify_struct);
+        
+        ownership = ddfs_mods.ownership;
+        
+        
+        switch ddfs_mods.bloss_or_aug
+            case 'blossom'
+                % pack bloom struct
+                create_bloom_struct.search_level = search_level;
+                create_bloom_struct.bloom_number = bloom_number;
+                create_bloom_struct.bloom = bloom;
+                create_bloom_struct.graph = graph;
+                create_bloom_struct.left_peak = left_peak;
+                create_bloom_struct.right_peak = right_peak;
+                create_bloom_struct.base = base;
+                create_bloom_struct.bottleneck = ddfs_mods.bottleneck;
+                create_bloom_struct.init_right = ddfs_mods.init_right;
+                create_bloom_struct.init_left = ddfs_mods.init_left;
+                create_bloom_struct.ownership = ddfs_mods.ownership;
+                create_bloom_struct.marked_vertices = ddfs_mods.marked_vertices;
+                create_bloom_struct.even_level = even_level;
+                create_bloom_struct.odd_level = odd_level;
+                create_bloom_struct.candidates = candidates;
+                create_bloom_struct.anomalies = anomalies;
+                create_bloom_struct.bridges = bridges;
+                
+                % run CREATE_BLOOM
+                [bloom_number, bloom, base, left_peak, right_peak, ...
+                    odd_level, even_level, candidates, bridges] = ...
+                    CREATE_BLOOM(create_bloom_struct);
+                
+            case 'augment'
+                
+                % pack aug_erase_struct
+                aug_erase_struct.graph = graph;
+                aug_erase_struct.pair = pair;
+                aug_erase_struct.erased = erased;
+                aug_erase_struct.pred_count = pred_count;
+                aug_erase_struct.successors = successors;
+                aug_erase_struct.init_left = ddfs_mods.init_left;
+                aug_erase_struct.init_right = ddfs_mods.init_right;
+                aug_erase_struct.final_left = ddfs_mods.final_left;
+                aug_erase_struct.final_right = ddfs_mods.final_right;
+                aug_erase_struct.even_level = even_level;
+                aug_erase_struct.odd_level = odd_level;
+                aug_erase_struct.ownership = ddfs_mods.ownership;
+                aug_erase_struct.bloom = bloom;
+                aug_erase_struct.base = base;
+                aug_erase_struct.left_peak = left_peak;
+                aug_erase_struct.right_peak = right_peak;
+                aug_erase_struct.predecessors = predecessors;
+                
+                [erased, pair, pred_count] = ...
+                    AUGERASE(aug_erase_struct);
+                augmentation_occurred = true;
+                matching_size = sum(pair<dummy);
+                if mod(matching_size,round(num_nodes/100))==0
+                    dispstat([num2str(100*matching_size/num_nodes),...
+                        '% of nodes matched']);
+                end
+        end
+    end
+    
+    search_level = search_level + 1;
+    candidates{index(search_level)} = ...
+        unique(candidates{index(search_level)});
     
 end
 
-% TODO could be clarified.
-if ~search_happened
-    search_level = search_level + 1;
-end
-
-bridges{index(search_level)} = unique(bridges{index(search_level)});
-
-% TODO make some indicator variables to improve this.
-
-if isempty(bridges{index(search_level)})
-    max_matching_found = true;
-end
-
-%%
-
-% while ~augmentation_occured in level i-1 and candidates level i nonempty
-% perform the search as done above, then for each bridge in bridges{i},
-% classify the bridge and augment/ignore/bloom. 
-
-
-
-
-
-
-
-%%
-
-
-
-
-% repack search_mods.
-search_mods.search_level = search_level;
-search_mods.even_level = even_level;
-search_mods.odd_level = odd_level ;
-search_mods.predecessors = predecessors;
-search_mods.successors = successors ;
-search_mods.pred_count = pred_count;
-search_mods.bridges = bridges ;
-search_mods.anomalies =  anomalies;
-search_mods.candidates = candidates;
-search_mods.initial_flag = initial_flag;
-search_mods.max_matching_found = max_matching_found;
-
-
-
 
 end
+
 
 
 

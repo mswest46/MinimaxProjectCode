@@ -21,7 +21,7 @@ anomalies = create_bloom_struct.anomalies;
 bridges = create_bloom_struct.bridges;
 
 
-level = min(even_level,odd_level);
+level = @(v) min(even_level(v),odd_level(v));
 bloom_vertices = find(marked_vertices); % all things in trees are bloom.
 
 % define bloom: give a number, assign it left_peak,
