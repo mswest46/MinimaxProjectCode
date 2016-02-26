@@ -15,11 +15,11 @@ if mod(level(vx),2)==0
 else % we need to loop around the blossom.
     l = find_path_struct.left_peak(B);
     r = find_path_struct.right_peak(B);
-    if find_path_struct.ownership(vx) == 1; % on left side of blossom
+    if find_path_struct.vertices(vx).ownership == 1; % on left side of blossom
         p1 = FINDPATH(l, vx, B, find_path_struct); %path from left_peak to vx.
         p2 = FINDPATH(r, b, B, find_path_struct); % path from right_peak to base
         path = [flip(p1),p2];
-    elseif find_path_struct.ownership(vx) == 2; % on right side of blossom
+    elseif find_path_struct.vertices(vx).ownership == 2; % on right side of blossom
         p1 = FINDPATH(r, vx, B,find_path_struct); % path from right_peak to vx. 
         p2 = FINDPATH(l, b, B, find_path_struct); % path from left_peak to base. 
         path = [flip(p1), p2];

@@ -1,11 +1,9 @@
 function size_biased_distribution_params = size_bias(distribution_params)
 
-% turns a custom distribution, with parameters a vector of probabilities 
-% into a size biased distribution 
+% given p_k', the probabilities of a node in the tree having k children, we
+% output p_k, the probabilities of a configuration model having k
+% neighbors. p_k = p_(k-1)'/(k-1) all normalized. 
 
-bias_vector = 0:length(distribution_params)-1;
-size_biased_distribution_params = bias_vector .* distribution_params;
-size_biased_distribution_params = size_biased_distribution_params/...
-    sum(size_biased_distribution_params);
-
-end
+bias_vec = 1:length(distribution_params);
+temp = [0,distribution_params./bias_vec];
+size_biased_distribution_params = temp/sum(temp);

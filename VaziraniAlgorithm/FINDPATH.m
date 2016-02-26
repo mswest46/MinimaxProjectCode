@@ -8,6 +8,10 @@ if ischar(high) && strcmp(high, '-getSubHandles')
     return
 end
 
+if high == 311 && low == 611
+    1;
+end
+
 % simplest case.
 if high == low
     path = high;
@@ -15,10 +19,9 @@ if high == low
 end
 
 % unpacking find_path_struct.
-assert(length(fieldnames(find_path_struct))==10);
+assert(length(fieldnames(find_path_struct))==9);
 graph = find_path_struct.graph;
-erased = find_path_struct.erased;
-ownership = find_path_struct.ownership;
+vertices = find_path_struct.vertices;
 bloom = find_path_struct.bloom;
 base = find_path_struct.base;
 % also in here but not used until open are:
@@ -33,18 +36,20 @@ num_nodes = graph.num_nodes;
 
 %initialization.
 visited_vertices = false(1,num_nodes);
-parent = zeros(1,num_nodes);
+% parent = zeros(1,num_nodes);
+
 
 % when we start out inside a bloom, it will mess with backtracking. So we
 % handle this edge case before doing anything. TODO get rid of this?
 if ~isnan(bloom(high)) && bloom(high)~=B
     v_start = base(bloom(high));
+%     vertices(v_start).findpath_parent = high;
     parent(v_start) = high;
 else
     v_start = high;
 end
 
-P = ownership(v_start);
+P = vertices(v_start).ownership;
 
 COA = v_start;
 history = [];
@@ -58,31 +63,41 @@ while COA~=low
     
     visited_vertices(COA) = true;
     
-    if in_same_bloom(COA,B,bloom) && ~has_same_parity(COA,P,ownership)
+    if in_same_bloom(COA,B,bloom) && ~has_same_parity(COA,P,vertices)
         % we are within B but have gotten to the wrong parity.
         % backtrack.
+%         COA = vertices(COA).findpath_parent;
+
         COA = parent(COA);
-    elseif in_same_bloom(COA,B,bloom) && has_same_parity(COA,P,ownership)
+    elseif in_same_bloom(COA,B,bloom) && has_same_parity(COA,P,vertices)
         % we are within B and in the right parity
-        preds = get_possible_predecessors(COA,predecessors,erased,visited_vertices);
+        preds = get_possible_predecessors(COA,predecessors,vertices,visited_vertices);
         if ~isempty(preds)
             % unvisited, unerased predecessors exist. move along one.
             u = preds(1);
+%             vertices(u).findpath_parent = COA;
+
             parent(u) = COA;
             COA = u;
         else
             % all predecessors have been erased or visited. backtrack.
             COA = parent(COA);
+%             COA = vertices(COA).findpath_parent;
+
         end
     elseif ~in_same_bloom(COA,B,bloom)
         % we have reached a bloom other than B. We move along to the base
         % if it has not already been visited.
         u = base(bloom(COA));
         if ~visited_vertices(u)
+%             vertices(u).findpath_parent = COA;
+
             parent(u) = COA;
             COA = u;
         else
             % backtrack.
+%             COA = vertices(COA).findpath_parent;
+
             COA = parent(COA);
         end
     end
@@ -95,6 +110,7 @@ end
 vx = low;
 path = low;
 while vx ~= high
+%     vx = vertices(vx).findpath_parent;
     vx = parent(vx);
     path = [vx, path];
 end
@@ -125,11 +141,11 @@ while ~isnan(bloom(b))
 end
 end
 
-function preds = get_possible_predecessors(vx,predecessors,erased,visited)
+function preds = get_possible_predecessors(vx,predecessors,vertices,visited)
 preds = [];
 for i = 1:length(predecessors{vx});
     ux = predecessors{vx}(i);
-    if erased(ux)
+    if vertices(ux).erased
         continue
     elseif visited(ux)
         continue
@@ -155,8 +171,8 @@ bool = (isnan(bloom(ux)) && isnan(B)) || ...
     (~isnan(bloom(ux)) && ~isnan(B) && bloom(ux) == B);
 end
 
-function bool = has_same_parity(ux,P,ownership)
-bool = (P ==  ownership(ux));
+function bool = has_same_parity(ux,P,vertices)
+bool = (P ==  vertices(ux).ownership);
 end
 
 

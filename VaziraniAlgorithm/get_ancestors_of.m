@@ -3,25 +3,29 @@ function ancestors = get_ancestors_of(vxs,predecessors, num_nodes)
 
 v1 = vxs(1);
 v2 = vxs(2);
+
+
+
 added = false(1,num_nodes);
-ancestors = zeros(1,100000);
-anc_place = 0;
-queue = zeros(1,100000);
-queue([1,2]) = [v1,v2];
-q_place = 2;
-while q_place>0
-    u = queue(q_place);
-    q_place = q_place-1;
+
+
+[A, a_pos] = my_queue('create');
+[Q,q_pos] = my_queue('create','','',[v1,v2]);
+
+% queue = zeros(1,100000);
+% queue([1,2]) = [v1,v2];
+% q_place = 2;
+
+while q_pos>0
+    [~,q_pos,u] = my_queue('pop',Q,q_pos,'');
     if ~added(u)
-        anc_place = anc_place+1;
-        ancestors(anc_place) = u;
+        [A,a_pos] = my_queue('add',A,a_pos,u);
         added(u) = true;
-        l = length(predecessors{u});
-        queue(q_place+1:q_place+l) = predecessors{u};
-        q_place = q_place + l;
+        [Q,q_pos] = my_queue('add',Q,q_pos,predecessors{u});
     end
 end
-ancestors = ancestors(1:anc_place);
+
+ancestors = my_queue('clean',A,a_pos);
 ancestors = sort(ancestors);
 
 

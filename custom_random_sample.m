@@ -15,7 +15,7 @@ function sample = custom_random_sample(distribution, size)
 % Example: 
 %    sample = custom_random_sample([0,.25,.25,.25,0,.25], 5)
 %    returns [1, 1 , 2, 5, 3]
-
+distribution = distribution/sum(distribution);
 cumDist = [cumsum(distribution) 1]; % CDF corresponding to the pmf
 randUni = rand(1, size); % uniform random numbers
 sample = zeros(1, size); % 

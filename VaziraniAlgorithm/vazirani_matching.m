@@ -11,11 +11,12 @@ augmentation_occurred=true;
 if nargin<2 || isempty(pair)
     pair = dummy*ones(1,num_nodes);
 end
-
+vertices = prep_vertices_for_vaz(num_nodes, pair);
 
 while augmentation_occurred;
     phase_no = phase_no + 1;
-    [augmentation_occurred,pair] = SEARCH(graph,pair);
+    [augmentation_occurred,vertices] = SEARCH(graph,vertices);
+    pair = [vertices.pair];
     matching_size = sum(pair<dummy);
     if matching_size == num_nodes || matching_size == num_nodes-1
         break

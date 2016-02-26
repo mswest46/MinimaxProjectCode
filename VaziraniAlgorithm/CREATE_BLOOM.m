@@ -1,6 +1,6 @@
 function [bloom_number, bloom, base, left_peak,right_peak, ...
-    odd_level, even_level, candidates, bridges] = ...
-    CREATE_BLOOM(create_bloom_struct)
+    odd_level, even_level, candidates, bridges, vertices] = ...
+    CREATE_BLOOM(create_bloom_struct, vertices)
 
 % unpack create_bloom_struct. TODO make this cleaner!!
 graph = create_bloom_struct.graph;
@@ -13,7 +13,6 @@ base = create_bloom_struct.base;
 bottleneck = create_bloom_struct.bottleneck;
 init_right = create_bloom_struct.init_right;
 init_left = create_bloom_struct.init_left;
-marked_vertices = create_bloom_struct.marked_vertices;
 even_level = create_bloom_struct.even_level;
 odd_level = create_bloom_struct.odd_level;
 candidates = create_bloom_struct.candidates;
@@ -22,7 +21,9 @@ bridges = create_bloom_struct.bridges;
 
 
 level = @(v) min(even_level(v),odd_level(v));
-bloom_vertices = find(marked_vertices); % all things in trees are bloom.
+
+bloom_vertices = create_bloom_struct.marked;
+
 
 % define bloom: give a number, assign it left_peak,
 % right_peak, and base.

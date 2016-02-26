@@ -31,7 +31,7 @@ if level_flag
         x0 = 0;
         for i = lev
             x(i) = x0;
-            x0 = x0+(1+.1*rand)/l^1.25;
+            x0 = x0+(1+.3*rand)/l^1.25;
             y(i) = k;
         end
     end  
