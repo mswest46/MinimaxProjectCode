@@ -104,10 +104,8 @@ while num_vxs_remaining>0 % the graph still has some vxs.
     
     % display things.
     matching_size = matching_size + 2;
-    if mod(matching_size,round(num_nodes/100))==0
-        dispstat([num2str(100*matching_size/num_nodes),...
+        dispstat([num2str(round(100*matching_size/num_nodes)),...
             '% of nodes matched']);
-    end
     
     % chain reaction erase from this edge.
     queue = [u,v];

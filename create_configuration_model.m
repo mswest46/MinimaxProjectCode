@@ -13,12 +13,15 @@ if display_output
 end
 % specify a degree distribution and the number of nodes
 even = false;
+x = 0;
 while ~even
+    x = x+1;
     degree = random_sample(degree_distribution, num_nodes);
     even = (mod(sum(degree),2)==0);
-    if display_output
-        dispstat('the sum of degrees was not even');
+    if x == 5
+        dispstat('It is possible the degree sum cannot be even. Check params');
     end
+
 end
 
 if display_output

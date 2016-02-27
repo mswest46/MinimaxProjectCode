@@ -1,5 +1,3 @@
-find_max_matching(adjacency_matrix,false,'vazirani')
-
 % every simulation should have a goal, something that it wants to find out.
 % So, will be saving data in batches. want to save distribution,
 % adjacency_matrix (and information about multi-edges), pair, and vertices
@@ -27,19 +25,17 @@ file_names = GetFilesInDirectoryMatchingString(simul_path,'Simulation');
 sim_numbers = zeros(1,length(file_names)+1);
 
 for k = 1:length(file_names)
-temp = regexp(file_names{k},'\d*$','match');
-if~isempty(temp)
-    sim_numbers(k) = str2double(temp{1});
-end
+    temp = regexp(file_names{k},'\d*$','match');
+    if~isempty(temp)
+        sim_numbers(k) = str2double(temp{1});
+    end
 end
 new_sim_num = max(sim_numbers)+1;
 new_sim_num_str = sprintf('%03d',new_sim_num);
 new_sim_path = strcat(simul_path,'Simulation',new_sim_num_str,'/');
 mkdir(new_sim_path);
 
-description = ['Graphs with nodes of two degrees, k1 and k2, for'...
-    ' k1 = 1 and k2 changing. Investigation, so not many trials '...
-    'for each type'];
+description = 'p1 = p, p3 = 1-p, for p = 0:.1:1]';
 
 this_script_file = strcat(mfilename('fullpath'),'.m');
 copyfile(this_script_file,strcat(new_sim_path,'script.txt'));
@@ -53,41 +49,64 @@ data = struct('num_nodes',[],'params',{},'adjacency_matrix',{},'multi_edges',{},
 
 %% From here down can be messed with
 
-p_opts = [.4,.55,.7];
-sample_size = 5;
-num_trials = 15;
-num_nodes = 10^6;
-
+p_opts = linspace(.1,1,10);
+sample_size = 10;
+num_trials = 100;
+cTime = zeros(10,10);
+eTime = zeros(10,10);
+fid = fopen(strcat(new_sim_path,'simpleData.txt')','wt');
 k = 1;
-for i = 1:3
+for i = 1:10
     p = p_opts(i);
+    fprintf(fid,['\n\np = ',num2str(p),':\n\n']);
     for j = 1:sample_size
+        r = round(rand);
+        num_nodes = .75 * 10^5+r;
+        fprintf(fid,['\ntrial ',num2str(j),': ']);
         dispstat(['running trial ',num2str(k),' of total ',num2str(num_trials)]);
         %specifying distribution
-        params = zeros(1,11);params([1,3]) = [p,1-p];
+        params = [0,p,0,1-p];
         biased_params = size_bias(params);
         dist = struct('type','custom','params',biased_params);
         
         %create graph
-        [adjacency_matrix,info] = create_configuration_model(num_nodes,dist,false);
+        tic;
+        [A,info] = create_configuration_model(num_nodes,dist,false);
+        [A,num_nodes] = isolate_largest_component(A);
+        degrees = full(sum(A));
+        m = max(degrees);
+        p = zeros(1,m+1);
+        for l = 0:m
+            p(i+1) = sum(degrees==l);
+        end
+        cTime(i,j) = toc;
         
         %find matching
-        pair = find_max_matching(adjacency_matrix,true,'vazirani');
-        
+        tic;
+        pair = find_max_matching(A,true,'vazirani2');
+        numVM = sum(pair<num_nodes+1);
         % find vertices in all matchings.
-        v_in_all = find_vxs_in_all_maximal_matchings(adjacency_matrix,pair);
+        v_in_all = find_vxs_in_all_maximal_matchings(A,pair);
+        numVAll = sum(v_in_all);
+        eTime(i,j) = toc;
+        
         
         % input the data.
         data(k).num_nodes = num_nodes; data(k).params = params; ...
-            data(k).adjacency_matrix = adjacency_matrix;...
-            data(k).multi_edges = info.multi_edges; data(k).pair = pair;...
-            data(k).v_in_all = v_in_all;
+            data(k).multi_edges = info.multi_edges; ...
+            data(k).v_in_all = v_in_all; data(k).degrees = degrees;...
+            data(k).numV = numVAll; data(k).numVM = numVM;data(k).r = r;
+        fprintf(fid,['\n    Graph Size: ', num2str(num_nodes)]);
+        fprintf(fid,['\n    Matching Size: ',num2str(numVM)]);
+        fprintf(fid,['\n    Winning Set Size: ',num2str(numVAll)]);
+        fprintf(fid,['\n    r: ',num2str(r)]);
         k = k+1;
     end
 end
+fclose(fid);
 
 
-save(strcat(new_sim_path,'data.mat'),'data');
+save(strcat(new_sim_path,'data.mat'),'data','eTime','cTime');
 
 
 

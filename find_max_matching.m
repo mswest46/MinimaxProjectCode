@@ -12,12 +12,15 @@ assert(islogical(KS));
 assert(strcmp(algorithm, 'karp-sipser') || ...
     strcmp(algorithm, 'vazirani') || ...
     strcmp(algorithm, 'edmonds') || ...
-    strcmp(algorithm, 'maxWeightMatching'));
+    strcmp(algorithm, 'maxWeightMatching') || ...
+    strcmp(algorithm, 'vazirani2'));
+    
 
 addpath('~/Code/MinimaxProjectCode/KarpSipserAlgorithm/');
 addpath('~/Code/MinimaxProjectCode/EdmondsAlgorithm/');
 addpath('~/Code/MinimaxProjectCode/VaziraniAlgorithm/');
 addpath('~/Code/MinimaxProjectCode/maxWeightMatching/');
+addpath('~/Code/VM');
 
 dispstat('','init');
 dispstat(['finding maximum matching with ', algorithm, ' algorithm'],...
@@ -36,6 +39,8 @@ switch algorithm
         [pair,core] = karp_sipser_algorithm(adjacency_matrix);
     case 'vazirani'
         pair = vazirani_matching(adjacency_matrix,pair);
+    case 'vazirani2'
+        pair = vazirani_matching2(adjacency_matrix,pair);
     case 'edmonds'
         pair = edmonds_matching(adjacency_matrix,pair);
     case 'maxWeightMatching'

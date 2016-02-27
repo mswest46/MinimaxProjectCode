@@ -39,6 +39,9 @@ while q_spot>0
     end
 end
 
-
+if sum(vertices_in_all_matchings) > num_nodes
+    error('huh?');
+end
+    
 dispstat(['percent of vertices in all maximal matchings: ',...
     num2str(100*sum(vertices_in_all_matchings)/num_nodes)]);
