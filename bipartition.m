@@ -28,6 +28,7 @@ end
 
 1;
 
-part1=find(partsArray==0);
-part2=find(partsArray==1);
+part1=(partsArray==0);
+part2=(partsArray==1);
+assert(all(part1|part2));
 end
