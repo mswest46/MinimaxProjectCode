@@ -23,9 +23,9 @@ while true
         u = part1(i);
         if pair(u) == dummy
             % u is free
-            [bool, inner_pair, inner_layer] = DFS(...
+            [augment, inner_pair, inner_layer] = DFS(...
                 adjacency_matrix, pair, layer, dummy, u);
-            if bool
+            if augment
                 % u is in an augmenting path. increment the matching size
                 % by one for display purposes.
                 matching_size = matching_size + 2;
@@ -62,7 +62,13 @@ for i = 1: length(part1)
     end
     layer(dummy) = inf;
 end
-1;
+
+free = find(pair == dummy);
+layer(free) = 0;
+layer(~free) = inf;
+Q = free;
+
+
 while q_location>0
     u = queue(q_location);
     q_location = q_location-1;
