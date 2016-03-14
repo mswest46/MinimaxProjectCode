@@ -1,30 +1,25 @@
-function path = OPEN(vx, find_path_struct)
+function altPath = OPEN(v,G,bloom,B)
 
-B = find_path_struct.bloom(vx);
+minLevel = @(v) min(G.V.evenLevel(v),G.V.oddLevel(v));
 
-if isnan(B)
-    error('not in bloom')
-end
-level = @(v) min(find_path_struct.even_level(v),...
-    find_path_struct.odd_level(v));
+b = bloom.base(B);
+P = G.V.ownership(v);
+assert(P==1||P==2);
 
-b = find_path_struct.base(B);
-if mod(level(vx),2)==0 
-    % if vx is outer, we don't need to go around the blossom. 
-    path = FINDPATH(vx, b, B, find_path_struct);
-else % we need to loop around the blossom.
-    l = find_path_struct.left_peak(B);
-    r = find_path_struct.right_peak(B);
-    if find_path_struct.vertices(vx).ownership == 1; % on left side of blossom
-        p1 = FINDPATH(l, vx, B, find_path_struct); %path from left_peak to vx.
-        p2 = FINDPATH(r, b, B, find_path_struct); % path from right_peak to base
-        path = [flip(p1),p2];
-    elseif find_path_struct.vertices(vx).ownership == 2; % on right side of blossom
-        p1 = FINDPATH(r, vx, B,find_path_struct); % path from right_peak to vx. 
-        p2 = FINDPATH(l, b, B, find_path_struct); % path from left_peak to base. 
-        path = [flip(p1), p2];
+if mod(minLevel(v),2)==0
+    altPath = FINDPATH(v,b,P,B,G,bloom,'mid');
+else
+    l = bloom.leftPeak(B);
+    r = bloom.rightPeak(B);
+    if P == 1
+        p1 = FINDPATH(l,v,1,B,G,bloom);
+        p2 = FINDPATH(r,b,2,B,G,bloom);
+        altPath = [flip(p1),p2];
     else
-        error('something has gone horribly, horribly wrong');
+        p1 = FINDPATH(r,v,2,B,G,bloom);
+        p2 = FINDPATH(l,b,1,B,G,bloom);
+        altPath = [flip(p1),p2];
     end
 end
+
 end

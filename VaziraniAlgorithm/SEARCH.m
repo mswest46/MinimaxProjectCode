@@ -1,274 +1,253 @@
-function [augmentation_occurred,vertices] = SEARCH(graph,vertices)
+function [G,augOccurred] = SEARCH(G,debugBool)
 
-dispstat('','init');
-
-num_nodes = graph.num_nodes;
-dummy = graph.dummy;
-
-search_level = 0;
-even_level = inf(1,num_nodes);
-odd_level = inf(1,num_nodes);
-predecessors = cell(1,num_nodes);
-successors = cell(1,num_nodes);
-pred_count = zeros(1,num_nodes);
-bridges = cell(1,num_nodes);
-anomalies = cell(1,num_nodes);
-candidates = cell(1,num_nodes);
-augmentation_occurred = false;
-bloom = nan(1,num_nodes);
-bloom_number = 0; % the highest index of the blooms already existing.
-base = []; % the base of the existing blooms
-left_peak = []; % the left peak of the existing blooms.
-right_peak = []; % the right peak of the existing blooms.
-
-f = num2cell(false(1,num_nodes));
-[vertices.erased] = f{:};
-
-z = num2cell(zeros(1,num_nodes));
-[vertices.pred_count] = z{:};
-ownership = num2cell(zeros(1,num_nodes));
-[vertices.ownership] = ownership{:};
-
-free = ([vertices.pair]==dummy);
-matching_size = num_nodes - sum(free);
-candidates{index(0)} = find(free);
-even_level(free) = 0;
+numNodes = G.info.numNodes;
+numEdges = G.info.numEdges;
+dummy = G.info.dummy;
 
 
-[vertices.left_parent] = z{:};
+% reset the vertices values for new search
 
-[vertices.right_parent] = z{:};
+G.V.ownership = zeros(1,numNodes);
+G.V.lParent = zeros(1,numNodes);
+G.V.rParent = zeros(1,numNodes);
+G.V.bloom = nan(1,numNodes);
+G.V.evenLevel = inf(1,numNodes);
+G.V.oddLevel = inf(1,numNodes);
+G.V.erased = false(1,numNodes);
+G.V.predCount = zeros(1,numNodes);
+G.V.preds = cell(1,numNodes);
+G.V.succs = cell(1,numNodes);
+G.V.anomalies = cell(1,numNodes);
+
+G.E.ddfsMark = false(1,numEdges);
+
+% reset level struct values for new search
+% TODO numNodes is way too big.
+c = cell(1,numNodes);
+z = num2cell(zeros(1,numNodes));
+level = struct('candidates',c,'bridges',c,...
+    'candPos',z,'bridgePos',z);
+
+C.l = ceil(sqrt(numNodes));
+C.candidates = cell(1,C.l);
+C.pos = zeros(1,C.l);
 
 
-% continue until augmentation occurs or candidates level i is empty
-while ~augmentation_occurred && ~isempty(candidates{index(search_level)})
-    cands2search = candidates{index(search_level)};
-    cand_pos = length(candidates{index(search_level+1)});
-    bridge_pos = zeros(1,num_nodes);
-    bridges_modified = false(1,num_nodes);
-    C = zeros(1,max(100,cand_pos));
-    C(1:cand_pos) = candidates{index(search_level+1)};
-    if mod(search_level,2)==0 %search_level is even.
-        for v = cands2search
-            neighbors = graph.neighbors{v}';
-            targets = neighbors;
-            for i = 1: length(neighbors)
-                if vertices(neighbors(i)).erased
-                    targets(targets==neighbors(i)) = [];
+% reset bloom struct values for new search.
+bloom = struct('base',[],'leftPeak',[],'rightPeak',[]);
+
+% reset the edges values for new search
+f = num2cell(false(1,numEdges));
+% i = num2cell(inf(1,numNodes));
+% na = num2cell(nan(1,numNodes));
+% c = cell(1,numNodes);
+% z = num2cell(zeros(1,numNodes));
+
+[G.edges.ddfsMark] = f{:};
+[G.edges.fpMark] = f{:};
+
+
+S = 0; % search level
+inc = @(i) i+1; % used to increment search level becuase matlab doesn't index by zero
+
+free = ([G.vertices.pair]==dummy);
+matchingSize = numNodes - sum(free);
+
+updateCandidates(0,find(free));
+
+
+G.V.evenLevel(free)=0;
+
+augOccurred = false;
+% coming into this, candidates and bridges are unique, and not
+% preallocated.
+while ~ (augOccurred || isempty(C.candidates{S+1}));
+    searchCandidates = unique(C.candidates{S+1}(1:C.pos(S+1)));
+%     [searchCandidates,~] = ...
+%         my_queue('clean',level(inc(S)).candidates,level(inc(S)).candPos,'');
+    % Searches G
+    if mod(S,2)==0 % even search level.
+        for v = searchCandidates
+            targets = G.vertices(v).neighbors;
+            for i = 1: length(targets);
+                w = G.vertices(v).neighbors(i);
+                if G.V.erased(w)
+                    targets(targets==w)=[];
                 end
             end
-            targets(targets==vertices(v).pair) = [];
+            targets(targets == G.vertices(v).pair) = [];
             for u = targets
-                if even_level(u) < inf
-                    j = (even_level(u) +...
-                        even_level(v)) / 2;
-                    b = graph.get_e_from_vs(u,v);
-                    %                     bridges{index(j)} = [bridges{index(j)},b];
-                    l = length(bridges{index(j)});
-                    if ~bridges_modified(index(j))
-                        z = zeros(1,1000);
-                        z(1:l) = bridges{index(j)};
-                        bridges{index(j)} = z;
-                        bridge_pos(index(j)) = l;
-                        bridges_modified(index(j)) = true;
-                    elseif bridge_pos(index(j)) == l
-                        z = zeros(1,10*l);
-                        z(1:l) = bridges{index(j)};
-                        bridges{index(j)} = z;
-                    end
-                    bridge_pos(index(j)) = bridge_pos(index(j))+1;
-                    bridges{index(j)}(bridge_pos(index(j))) = b;
-                    
+                if G.V.evenLevel(u) < inf
+                    b = getEfromVs(G,u,v);
+                    j = inc(sum(G.V.evenLevel([u,v]))/2); % maybe doesn't work
+                    [level(j).bridges, level(j).bridgePos] = ...
+                        my_queue('add',level(j).bridges,level(j).bridgePos,b);
                 else
-                    if odd_level(u) == inf
-                        odd_level(u) = search_level+1;
+                    if G.V.oddLevel(u) == inf
+                        G.V.oddLevel(u) = S + 1;
                     end
-                    if odd_level(u) == ...
-                            search_level+1
-                        vertices(u).pred_count = ...
-                            vertices(u).pred_count + 1;
-                        predecessors{u} = ...
-                            [predecessors{u}, v];
-                        successors{v} = ...
-                            [successors{v}, u];
-                        cand_pos = cand_pos+1;
-                        if cand_pos > length(C)
-                            z = zeros(1,10*length(C));
-                            z(1:length(C)) = C;
-                            C = z;
-                        end
-                        C(cand_pos) = u;
-                    end
-                    if odd_level(u) < search_level
-                        anomalies{u} = [anomalies{u}, v];
-                        
-                        % this could cause bugs.
-                        cand_pos = cand_pos+1;
-                        if cand_pos > length(C)
-                            z = zeros(1,10*length(C));
-                            z(1:length(C)) = C;
-                            C = z;
-                        end
-                        C(cand_pos) = u;
-                    end
-                end
-            end
-        end
-    else %search_level is odd.
-        for v = cands2search
-            if isnan(bloom(v))
-                u = vertices(v).pair;
-                if odd_level(u) < inf
-                    j = (odd_level(u) + odd_level(v)) / 2;
-                    b = graph.get_e_from_vs(u,v);
-                    bridges{index(j)} = [bridges{index(j)},b];
-                elseif even_level(u) == inf
-                    predecessors{u} = v;
-                    successors{v} = u;
-                    vertices(u).pred_count = 1;
-                    even_level(u) = search_level + 1;
-                    cand_pos = cand_pos+1;
-                    if cand_pos > length(C)
-                        z = zeros(1,10*length(C));
-                        z(1:length(C)) = C;
-                        C = z;
-                    end
-                    C(cand_pos) = u;
-                end
-            end
-        end
-    end
-    
-    mod_bridge_indices = find(bridges_modified); % note that these are already +1ed
-    for i = 1:length(mod_bridge_indices)
-        ind = mod_bridge_indices(i);
-        bridges{ind} = bridges{ind}(1:bridge_pos(ind));
-    end
-    candidates{index(search_level+1)} = unique(C(1:cand_pos));
-    bridge_list = unique(bridges{index(search_level)});
-    
-    for i = 1: length(bridge_list)
-        bridge = bridge_list(i);
-        
-        % pack classify struct.
-        
-        classify_struct.graph = graph;
-        classify_struct.bridge = bridge;
-        classify_struct.predecessors = predecessors;
-        classify_struct.even_level = even_level;
-        classify_struct.odd_level = odd_level;
-        classify_struct.bloom = bloom;
-        classify_struct.base = base;
-        % run CLASSIFY
-        if bridge ==2508
-            1;
-        end
-        [ddfs_mods,vertices] = CLASSIFY(classify_struct,vertices);
-        
-        
-        
-        switch ddfs_mods.bloss_or_aug
-            case 'blossom'
-                % pack bloom struct
-                create_bloom_struct.search_level = search_level;
-                create_bloom_struct.bloom_number = bloom_number;
-                create_bloom_struct.bloom = bloom;
-                create_bloom_struct.graph = graph;
-                create_bloom_struct.left_peak = left_peak;
-                create_bloom_struct.right_peak = right_peak;
-                create_bloom_struct.base = base;
-                create_bloom_struct.bottleneck = ddfs_mods.bottleneck;
-                create_bloom_struct.init_right = ddfs_mods.init_right;
-                create_bloom_struct.init_left = ddfs_mods.init_left;
-                create_bloom_struct.even_level = even_level;
-                create_bloom_struct.odd_level = odd_level;
-                create_bloom_struct.candidates = candidates;
-                create_bloom_struct.anomalies = anomalies;
-                create_bloom_struct.bridges = bridges;
-                create_bloom_struct.marked = ddfs_mods.marked;
-                
-                % run CREATE_BLOOM
-                [bloom_number, bloom, base, left_peak, right_peak, ...
-                    odd_level, even_level, candidates, bridges,vertices] = ...
-                    CREATE_BLOOM(create_bloom_struct,vertices);
-                
-            case 'augment'
-                
-                % pack aug_erase_struct
-                aug_erase_struct.graph = graph;
-                aug_erase_struct.successors = successors;
-                aug_erase_struct.init_left = ddfs_mods.init_left;
-                aug_erase_struct.init_right = ddfs_mods.init_right;
-                aug_erase_struct.final_left = ddfs_mods.final_left;
-                aug_erase_struct.final_right = ddfs_mods.final_right;
-                aug_erase_struct.even_level = even_level;
-                aug_erase_struct.odd_level = odd_level;
-                aug_erase_struct.bloom = bloom;
-                aug_erase_struct.base = base;
-                aug_erase_struct.left_peak = left_peak;
-                aug_erase_struct.right_peak = right_peak;
-                aug_erase_struct.predecessors = predecessors;
-                
-                
-                
-                init_left = ddfs_mods.init_left;
-                final_left = ddfs_mods.final_left;
-                if init_left == 311 && final_left == 611
-                    1;
-                end
-                
-                
-                
-                [vertices,aug_path] = ...
-                    AUGERASE(aug_erase_struct,vertices);
-                
-                
-                % augment
-                for k = 1: length(aug_path) - 1
-                    if mod(k,2) % i is odd
-                        vertices(aug_path(k)).pair = aug_path(k+1);
-                        vertices(aug_path(k+1)).pair = aug_path(k);
-                    end
-                end
-                
-                % erase
-                queue = aug_path;
-                while ~isempty(queue)
+                    oL = G.V.oddLevel(u);
+                    if oL == S + 1;
+                        G.V.predCount(u) = G.V.predCount(u)+1;
+                        G.V.preds{u} = [G.V.preds{u}, v];
+                        G.V.succs{v} = [G.V.succs{v}, u];
+                        % add u to level S+1 candidates
+                        updateCandidates(S+1,u);
 
-                    o = queue(end);
-                    queue = queue(1:end-1);
-                    vertices(o).erased = true;
-                    for w = successors{o}
-                        if ~vertices(w).erased
-                            vertices(w).pred_count = vertices(w).pred_count - 1;
-                            if vertices(w).pred_count == 0
-                                queue = [queue,w];
+                    end
+                    if oL < S %TODO could this be an else statement?
+                        G.V.anomalies{u} = ...
+                            [G.V.anomalies{u},v];
+                        % add to candidates anyway? This might be
+                        % problematic. TODO make this comment make
+                        % senseExcept on return, we'd be looking at odd
+                        % level(u) and so u will be in a bloom. hence this
+                        % condition 10 lines down (*)
+                        updateCandidates(S+1,u);
+                    end
+                end
+            end
+        end
+    else % odd search level.
+        for v = searchCandidates
+            if isnan(G.V.bloom(v)) % (*)
+                u = G.vertices(v).pair;
+                if G.V.oddLevel(u) < inf
+                    j = inc(sum(G.V.oddLevel([u,v])) / 2);
+                    b = getEfromVs(G,u,v);
+                    [level(j).bridges,level(j).bridgePos] = my_queue('add',...
+                        level(j).bridges,level(j).bridgePos,b);
+                elseif G.V.evenLevel(u) == inf
+                    G.V.preds{u} = v;
+                    G.V.predCount(u) = 1;
+                    G.V.succs{v} = u;
+                    G.V.evenLevel(u) = S + 1;
+                    % add u to S+1 candidates
+                    updateCandidates(S+1,u);
+                end
+            end
+        end
+    end
+    
+    [bridges,~] = my_queue('clean',level(inc(S)).bridges,level(inc(S)).bridgePos,'');
+    for bridge = bridges
+        [G,D,marked] = DDFS(bridge,G,bloom,level,debugBool);
+        switch D.bloomFound
+            case 1
+                info = struct(...
+                    'S',S,...
+                    'bloomNodes',marked,...
+                    'leftPeak',D.initLeft,...
+                    'rightPeak',D.initRight,...
+                    'base',D.DCV);
+                %                 [G,level,bloom] = BLOOM(G,level,bloom,info);
+                
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                
+                B = length(bloom.base) + 1;
+                
+                bloom.base(B) = info.base;
+                bloom.leftPeak(B) = info.leftPeak;
+                bloom.rightPeak(B) = info.rightPeak;
+                
+                for y = info.bloomNodes
+                    if ~isnan(G.V.bloom(y))
+                        save('~/Desktop/bad_mat.mat','G.A');
+                        error('this vx is in a bloom already. bad mat saved to desktop.')
+                    end
+                    G.V.bloom(y) = B;
+                    minLevel = min(G.V.evenLevel(y),G.V.oddLevel(y));
+                    switch mod(minLevel,2)
+                        case 0 % y is even (i.e. at the end of a matched edge).
+                            G.V.oddLevel(y) = 2*info.S +1 - G.V.evenLevel(y);
+                        case 1 % y is odd (beginning of a matched edge).
+                            G.V.evenLevel(y) = 2*info.S +1 - G.V.oddLevel(y);
+                            l = G.V.evenLevel(y);
+                            updateCandidates(l,y);
+                            for z = G.V.anomalies{y}
+                                j = (G.V.evenLevel(z)+ G.V.evenLevel(y))/2;
+                                [level(inc(j)).bridges, level(inc(j)).bridgePos] = ...
+                                    my_queue('add',level(inc(j)).bridges,...
+                                    level(inc(j)).bridgePos, getEfromVs(G,y,z));
+                            end
+                            % I don't understand why the algorithm requires us to mark y,z
+                            % used for future DDFS. I am ignoring for now, hoping it is not
+                            % necessary! TODO.
+                    end
+                end
+                
+                
+                
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            case 0
+                lPath = FINDPATH(D.initLeft,D.lCOA,1,nan,G,bloom);
+                rPath = FINDPATH(D.initRight,D.rCOA,2,nan,G,bloom);
+                augPath = [flip(lPath),rPath];
+                augOccurred = true;
+                
+                %The following block could be place in a different
+                %function, but it slows things down.
+                % augment
+                for k = 1: length(augPath) - 1
+                    if mod(k,2) % i is odd
+                        G.vertices(augPath(k)).pair = augPath(k+1);
+                        G.vertices(augPath(k+1)).pair = augPath(k);
+                    end
+                end
+                % erase
+                [Q,qPos] = my_queue('create','','',augPath);
+                while qPos>0
+                    [Q,qPos,o] = my_queue('pop',Q,qPos,'');
+                    G.V.erased(o) = true;
+                    for w = G.V.succs{o}
+                        if ~G.V.erased(w)
+                            G.V.predCount(w) = G.V.predCount(w) - 1;
+                            if G.V.predCount(w) == 0
+                                [Q,qPos] = my_queue('add',Q,qPos,w);
                             end
                         end
                     end
                 end
-%                 
-%                 pair = [vertices.pair];
-%                 check_pair_is_matching(graph.adjacency_matrix,pair);
-%                 
-                augmentation_occurred = true;
-                matching_size = matching_size+2;
-                if mod(matching_size,round(num_nodes/100))==0
-                    dispstat([num2str(100*matching_size/num_nodes),...
-                        '% of nodes matched']);
-                end
+            case -1
+                % do nothing.
         end
     end
     
-    search_level = search_level + 1;
-    candidates{index(search_level)} = ...
-        unique(candidates{index(search_level)});
-    
+    S = S+1;
+    updateCandidates(S,'') % this makes sure that S candidates exists
 end
 
 
+    function updateCandidates(s,vs)    
+        
+        if s+1>C.l % we need to resize candidates;
+            newL = 10*C.l;
+            tempCell = cell(1,newL);
+            tempCell(1:C.l) = C.candidates;
+            C.candidates = tempCell;
+            tempZero = zeros(1,newL);
+            tempZero(1:C.l) = C.pos;
+            C.pos = tempZero;
+            C.l = newL;
+        end
+        if isempty(vs)
+            return
+        end
+        newPos = C.pos(s+1) + length(vs);
+        tempL = length(C.candidates{s+1});
+        if newPos > tempL
+            tempZero = zeros(1,10*max(tempL,1));
+            tempZero(1:tempL) = C.candidates{s+1};
+            C.candidates{s+1} = tempZero;
+        end
+        C.candidates{s+1} (C.pos(s+1)+1:newPos) = vs;
+        C.pos(s+1) = newPos;
+    end
+
+    function updateBridges(s,v)
+    end
+
+
 end
-
-
 
 
