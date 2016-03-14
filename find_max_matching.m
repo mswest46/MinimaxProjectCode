@@ -13,9 +13,10 @@ assert(strcmp(algorithm, 'karp-sipser') || ...
     strcmp(algorithm, 'vazirani') || ...
     strcmp(algorithm, 'edmonds') || ...
     strcmp(algorithm, 'maxWeightMatching') || ...
-    strcmp(algorithm, 'vazirani2'));
+    strcmp(algorithm, 'vazirani2') || ...
+    strcmp(algorithm, 'hopcroft-karp'));
     
-
+addpath('~/Code/MinimaxProjectCode/HopcroftKarpAlgorithm/');
 addpath('~/Code/MinimaxProjectCode/KarpSipserAlgorithm/');
 addpath('~/Code/MinimaxProjectCode/EdmondsAlgorithm/');
 addpath('~/Code/MinimaxProjectCode/VaziraniAlgorithm/');
@@ -48,6 +49,8 @@ switch algorithm
             find(adjacency_matrix));
         inedges = [row_subs,col_subs,ones(length(row_subs),1)];
         pair = maxWeightMatching(inedges);
+    case 'hopcroft-karp'
+        pair = hopcroft_karp(adjacency_matrix,pair);
 end
 
 end

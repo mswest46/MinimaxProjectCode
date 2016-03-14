@@ -35,8 +35,7 @@ new_sim_num_str = sprintf('%03d',new_sim_num);
 new_sim_path = strcat(simul_path,'Simulation',new_sim_num_str,'/');
 mkdir(new_sim_path);
 
-description = ['What happens with multiple R2 atoms? several trials of '...
-    'p2 = .6, p12 = .4'];
+description = 'p1 = p, p3 = 1-p, for p = linspace(.1,.9,10) for 1 million node bipartite graphs';
 
 this_script_file = strcat(mfilename('fullpath'),'.m');
 copyfile(this_script_file,strcat(new_sim_path,'script.txt'));
@@ -50,59 +49,60 @@ data = struct('num_nodes',[],'params',{},'adjacency_matrix',{},'multi_edges',{},
 
 %% From here down can be messed with
 
-sample_size = 15;
-num_trials = 15;
-eTime = zeros(1,15);
+p_opts = linspace(.1,.9,10);
+sample_size = 10;
+num_trials = 100;
+cTime = zeros(10,10);
+eTime = zeros(10,10);
 fid = fopen(strcat(new_sim_path,'simpleData.txt')','wt');
 k = 1;
-params = zeros(1,13); params([1,3,13]) = [.0001,.6,.4];
-for j = 1:sample_size
-    r = round(rand);
-    num_nodes = 5*10^5+r;
-    fprintf(fid,['\ntrial ',num2str(j),': ']);
-    dispstat(['running trial ',num2str(k),' of total ',num2str(num_trials)]);
-    %specifying distribution
-    params = geometric_params(p);
-    biased_params = size_bias(params);
-    dist = struct('type','custom','params',biased_params);
+for i = 1:10
+    p = p_opts(i);
+    fprintf(fid,['\n\np = ',num2str(p),':\n\n']);
+    for j = 1:sample_size
+        num_nodes = 10^6;
+        fprintf(fid,['\ntrial ',num2str(j),': ']);
+        dispstat(['running trial ',num2str(k),' of total ',num2str(num_trials)]);
+        %specifying distribution
+        p_opts;
+        params = [0,p,0,1-p];
+        biased_params = size_bias(params);
+        dist = struct('type','custom','params',biased_params);
+        
+        %create graph
+        tic;
+        [A = create_bipartite_configuration_model(num_nodes,dist);
+        [A,num_nodes] = isolate_largest_component(A);
+        degrees = full(sum(A));
+        cTime(i,j) = toc;
+        
+        %find matching
+        tic;
+        pair = find_max_matching(A,true,'hopcroft-karp');
+        numVM = sum(pair<num_nodes+1);
+        % find vertices in all matchings.
+        v_in_all = find_vxs_in_all_maximal_matchings(A,pair);
+        numVAll = sum(v_in_all);
+        t = toc;
+        eTime(i,j) = t;
+        
+        % input the data.
+        data(k).num_nodes = num_nodes; ...
+            data(k).params = params; ...
+            data(k).multi_edges = info.multi_edges; ...
+            data(k).v_in_all = v_in_all; data(k).degrees = degrees;...
+            data(k).numV = numVAll; data(k).numVM = numVM;data(k).r = r;
+        fprintf(fid,['\n    Graph Size: ', num2str(num_nodes)]);
+        fprintf(fid,['\n    Matching Size: ',num2str(numVM)]);
+        fprintf(fid,['\n    Winning Set Size: ',num2str(numVAll)]);
+        fprintf(fid,['\n    time:', datestr(clock)]);
+        fprintf(fid,['\n    time elapsed:' t]);
+        k = k+1;
+    end
     
-    %create graph
-    tic;
-    [A,info] = create_configuration_model(num_nodes,dist,false);
-    [A,num_nodes] = isolate_largest_component(A);
-    degrees = full(sum(A));
-    cTime(i,j) = toc;
+    save(strcat(new_sim_path,'data.mat'),'data','eTime','cTime');
     
-    %find matching
-    tic;
-    pair = find_max_matching(A,true,'vazirani2');
-    numVM = sum(pair<num_nodes+1);
-    % find vertices in all matchings.
-    v_in_all = find_vxs_in_all_maximal_matchings(A,pair);
-    numVAll = sum(v_in_all);
-    t = toc;
-    eTime(i,j) = t;
-    
-    
-    % input the data.
-    data(k).num_nodes = num_nodes; ...
-        data(k).params = params; ...
-        data(k).multi_edges = info.multi_edges; ...
-        data(k).v_in_all = v_in_all; data(k).degrees = degrees;...
-        data(k).numV = numVAll; data(k).numVM = numVM;data(k).r = r;
-    fprintf(fid,['\n    Graph Size: ', num2str(num_nodes)]);
-    fprintf(fid,['\n    Matching Size: ',num2str(numVM)]);
-    fprintf(fid,['\n    Winning Set Size: ',num2str(numVAll)]);
-    fprintf(fid,['\n    r: ',num2str(r)]);
-    fprintf(fid,['\n    elapsed time: ',num2str(t)]);
-    fprintf(fid,['\n    time:', datestr(clock)]);
-    k = k+1;
 end
-
 fclose(fid);
-
-
-save(strcat(new_sim_path,'data.mat'),'data','eTime','cTime');
-
 
 

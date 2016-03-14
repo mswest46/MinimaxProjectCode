@@ -1,10 +1,10 @@
 distribution.type = 'custom';
-params = [0,0,.5,0,0,0,.2,0,0,0,.2,.1];
+params = [0,.6,0,.4];
 distribution.params = size_bias(params);
-num_nodes = 100;
+num_nodes = 1000000;
 for i = 1:4
         adjacency_matrix = create_bipartite_configuration_model(num_nodes,distribution);
-        pair = hopcroft_karp(adjacency_matrix);
+        pair = find_max_matching(adjacency_matrix,true,'hopcroft-karp');
         bool = check_pair_is_matching(adjacency_matrix,pair);
         assert(bool);
         bool = check_for_aug_path(adjacency_matrix,pair);

@@ -3,12 +3,12 @@ function pair = hopcroft_karp(adjacency_matrix,pair)
 [part1, ~] = bipartition(adjacency_matrix); % part1 is a num_nodes length array;. 
 num_nodes = length(adjacency_matrix(:,1));
 dummy = num_nodes+1;
-if ~exist('pair','var')
+if ~exist('pair','var') || isempty(pair)
     pair = dummy*ones(1,num_nodes);
 end
 % pair is an array which contains the matching information. everything
 % initially is free, so we say it is paired with dummy.
-matching_size = 0;
+matching_size = sum(pair<dummy);
 dispstat('','init');
 
 G.neighbors = cell(1,num_nodes);
@@ -36,7 +36,7 @@ while true
         break
     end
     for u = G.part1Inds;
-        if pair(u) == dummy
+        if G.pair(u) == G.dummy
             % u is free
             [augment, G] = DFS(G, u);
             if augment
@@ -90,7 +90,7 @@ function [bool,G] = DFS(G,u)
 if ~(u == G.dummy)
     neighbors = G.neighbors{u};
     for v = neighbors
-        if (G.layer(G.pair(v)) == G.layer(u) + 1) % we are moving along augmenting path.
+        if (G.layer(G.pair(v)) == G.layer(u) + 1) % we are moving along augmenting path. 
             [bool, G] = DFS(G,G.pair(v));
             if ~bool
                 1;
@@ -105,7 +105,7 @@ if ~(u == G.dummy)
         end
     end
     % we only get here when there are no aug paths from u to free vx.
-    G.layer(u) = inf; % we do this so we don't check it again for other u
+    G.layer(u) = inf; % we do this so we don't check it again for other u. %THIS IS PASSED ON TO G IF NO PATH FOUND
     bool = false;
     return
 else % we are at dummy vertex so havre found augmenting path.
