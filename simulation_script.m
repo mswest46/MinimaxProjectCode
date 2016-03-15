@@ -60,7 +60,7 @@ for i = 1:10
     p = p_opts(i);
     fprintf(fid,['\n\np = ',num2str(p),':\n\n']);
     for j = 1:sample_size
-        num_nodes = 10^6;
+        num_nodes = 10^2;
         fprintf(fid,['\ntrial ',num2str(j),': ']);
         dispstat(['running trial ',num2str(k),' of total ',num2str(num_trials)]);
         %specifying distribution
@@ -71,7 +71,7 @@ for i = 1:10
         
         %create graph
         tic;
-        [A = create_bipartite_configuration_model(num_nodes,dist);
+        A = create_bipartite_configuration_model(num_nodes,dist);
         [A,num_nodes] = isolate_largest_component(A);
         degrees = full(sum(A));
         cTime(i,j) = toc;
@@ -89,9 +89,8 @@ for i = 1:10
         % input the data.
         data(k).num_nodes = num_nodes; ...
             data(k).params = params; ...
-            data(k).multi_edges = info.multi_edges; ...
             data(k).v_in_all = v_in_all; data(k).degrees = degrees;...
-            data(k).numV = numVAll; data(k).numVM = numVM;data(k).r = r;
+            data(k).numV = numVAll; data(k).numVM = numVM;x
         fprintf(fid,['\n    Graph Size: ', num2str(num_nodes)]);
         fprintf(fid,['\n    Matching Size: ',num2str(numVM)]);
         fprintf(fid,['\n    Winning Set Size: ',num2str(numVAll)]);
