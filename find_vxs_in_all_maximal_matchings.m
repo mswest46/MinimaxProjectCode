@@ -1,4 +1,4 @@
-function vertices_in_all_matchings = find_vxs_in_all_maximal_matchings(...
+function [vertices_in_all_matchings,persistence] = find_vxs_in_all_maximal_matchings(...
     adjacency_matrix, pair)
 
 dispstat('','init');
@@ -24,8 +24,6 @@ q_spot = length(temp);
 while q_spot>0
     u = queue(q_spot);
     q_spot = q_spot-1;
-%     u = queue(end);
-%     queue = queue(1:end-1);
     neighbors = graph.neighbors{u};
     for i = 1:length(neighbors)
         v = neighbors(i);
@@ -34,13 +32,8 @@ while q_spot>0
             vertices_in_all_matchings(pair(v)) = false;
             q_spot = q_spot+1;
             queue(q_spot) = pair(v);
-%             queue = [queue, pair(v)];
         end
     end
-end
-
-if sum(vertices_in_all_matchings) > num_nodes
-    error('huh?');
 end
     
 dispstat(['percent of vertices in all maximal matchings: ',...
